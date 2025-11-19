@@ -1,0 +1,107 @@
+.dashboard-container {
+  min-height: 100vh;
+  background: #f5f7fa;
+}
+
+.dashboard-nav {
+  background: white;
+  padding: 16px 32px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #333;
+}
+
+.logo-icon {
+  font-size: 28px;
+}
+
+.btn-logout {
+  padding: 10px 20px;
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-logout:hover {
+  background: #cc0000;
+  transform: translateY(-2px);
+}
+
+.dashboard-content {
+  padding: 48px 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.welcome-card {
+  background: white;
+  border-radius: 12px;
+  padding: 48px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-icon {
+  font-size: 80px;
+  margin-bottom: 24px;
+}
+
+.welcome-card h1 {
+  font-size: 32px;
+  color: #333;
+  margin: 0 0 12px 0;
+}
+
+.welcome-subtitle {
+  font-size: 20px;
+  color: #666;
+  margin-bottom: 32px;
+}
+
+.user-info {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.info-item {
+  padding: 12px 0;
+  font-size: 16px;
+  color: #555;
+}
+
+.info-item strong {
+  color: #333;
+  margin-right: 8px;
+}
+
+.status-active {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.coming-soon {
+  padding-top: 24px;
+  border-top: 1px solid #eee;
+}
+
+.coming-soon p {
+  font-size: 16px;
+  color: #888;
+  margin: 8px 0;
+}

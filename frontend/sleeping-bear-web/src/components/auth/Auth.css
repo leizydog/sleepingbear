@@ -1,0 +1,221 @@
+/* =========================================
+   GLOBAL & LAYOUT
+   ========================================= */
+
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eef1f5;
+  padding: 20px;
+  font-family: "Inter", "Poppins", sans-serif;
+}
+
+/* =========================================
+   CARD
+   ========================================= */
+
+.auth-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #d7d9de;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  width: 100%;
+  max-width: 470px;
+  padding: 48px 42px;
+  transition: transform 0.25s ease;
+}
+
+.auth-card:hover {
+  transform: translateY(-2px);
+}
+
+/* =========================================
+   HEADER
+   ========================================= */
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 34px;
+}
+
+.logo-icon {
+  font-size: 62px;
+  color: #1a2b49;
+}
+
+.auth-header h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a2b49;
+  margin-bottom: 6px;
+}
+
+.auth-header p {
+  font-size: 15px;
+  color: #5b6475;
+  line-height: 1.4;
+}
+
+/* =========================================
+   FORM STRUCTURE
+   ========================================= */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.form-group label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a2b49;
+  letter-spacing: 0.2px;
+}
+
+/* =========================================
+   INPUT FIELDS
+   ========================================= */
+
+.form-group input {
+  padding: 14px 16px;
+  border: 1px solid #c6c9d1;
+  border-radius: 8px;
+  background: #fafafc;
+  font-size: 15px;
+  transition: all 0.25s ease;
+}
+
+.form-group input::placeholder {
+  color: #9ba2ad;
+}
+
+.form-group input:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: #4a6fa5;
+  box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.18);
+}
+
+/* =========================================
+   PASSWORD VISIBILITY TOGGLE
+   ========================================= */
+
+.password-input {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input input {
+  padding-right: 50px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  color: #475168;
+  transition: opacity 0.2s ease;
+}
+
+.toggle-password:hover {
+  opacity: 0.7;
+}
+
+/* =========================================
+   BUTTONS
+   ========================================= */
+
+.btn {
+  padding: 16px 24px;
+  width: 100%;
+  border: none;
+  border-radius: 9px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.28s ease;
+  letter-spacing: 0.3px;
+}
+
+.btn-primary {
+  background: #1a2b49;
+  color: #ffffff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #132035;
+  box-shadow: 0 6px 18px rgba(26, 43, 73, 0.35);
+  transform: translateY(-2px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =========================================
+   ERROR MESSAGES
+   ========================================= */
+
+.error-message {
+  padding: 14px 16px;
+  background: #ffe8e8;
+  border: 1px solid #f3b6b6;
+  border-radius: 8px;
+  color: #b91c1c;
+  font-size: 14px;
+  line-height: 1.4;
+  animation: fadeIn 0.3s ease;
+}
+
+.field-error {
+  color: #c62828;
+  font-size: 13px;
+  margin-top: -4px;
+}
+
+/* Smooth fade animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   FOOTER SECTION
+   ========================================= */
+
+.auth-footer {
+  margin-top: 26px;
+  text-align: center;
+}
+
+.auth-footer p {
+  font-size: 15px;
+  color: #4a6fa5;
+}
+
+.auth-footer a {
+  color: #1a2b49;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.auth-footer a:hover {
+  opacity: 0.75;
+}
