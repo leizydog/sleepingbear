@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
-import models
-import auth
-from database import get_db
-from services.notification_service import NotificationService
-from services.ml_data_service import MLDataService
+from app.models import all_models as models
+from app.core import security as auth
+from app.db.session import get_db
+from app.services.notification_service import NotificationService
+from app.services.ml_data_service import MLDataService
 
 router = APIRouter(prefix="/notifications", tags=["Notifications"])
 

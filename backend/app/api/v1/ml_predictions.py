@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
-import models
-import auth
-from database import get_db
+from app.models import all_models as models
+from app.core import security as auth
+from app.db.session import get_db
 from services.ml_prediction_service import MLPredictionService
 from services.ml_data_service import MLDataService
 from pydantic import BaseModel

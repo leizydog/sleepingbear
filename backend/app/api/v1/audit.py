@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import datetime
-import models
-import auth
-from database import get_db
+from app.models import all_models as models
+from app.core import security as auth
+from app.db.session import get_db
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/audit", tags=["Audit Logs"])

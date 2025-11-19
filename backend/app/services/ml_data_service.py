@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-import models
+from app.models import all_models as models
 import pandas as pd
 from datetime import datetime, timedelta
 from typing import List, Dict

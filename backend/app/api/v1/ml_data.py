@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-import models
-import auth
-from database import get_db
+from app.models import all_models as models
+from app.core import security as auth
+from app.db.session import get_db
 from services.ml_data_service import MLDataService
 import os
 

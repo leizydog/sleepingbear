@@ -1,14 +1,15 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import Login from './components/auth/Login';
-import Register from './components/auth/Register';
-import Dashboard from './components/dashboard/Dashboard';
-import PropertyList from './components/properties/PropertyList';
-import PropertyDetail from './components/properties/PropertyDetail';
-import BookingList from './components/bookings/BookingList';
 import './App.css';
-import { useNavigate } from 'react-router-dom';
+
+// --- UPDATED IMPORTS FOR ATOMIC DESIGN ---
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
+import DashboardHome from './pages/dashboard/DashboardHome';
+import PropertyList from './components/organisms/PropertyList/PropertyList';
+import PropertyDetail from './components/organisms/PropertyDetail/PropertyDetail';
+import BookingList from './components/organisms/BookingList/BookingList';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -83,7 +84,7 @@ function App() {
             path="/login"
             element={
               <PublicRoute>
-                <Login />
+                <LoginPage />
               </PublicRoute>
             }
           />
@@ -91,7 +92,7 @@ function App() {
             path="/register"
             element={
               <PublicRoute>
-                <Register />
+                <RegisterPage />
               </PublicRoute>
             }
           />
@@ -100,7 +101,7 @@ function App() {
             element={
               <ProtectedRoute>
                 <Layout>
-                  <Dashboard />
+                  <DashboardHome />
                 </Layout>
               </ProtectedRoute>
             }

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from '../../services/api';
-import BookingModal from '../bookings/BookingModal';
-import './Properties.css';
+import axios from '../../../services/api';
+import BookingModal from '../BookingModal/BookingModal';
+
 
 const PropertyDetail = () => {
   const { id } = useParams();

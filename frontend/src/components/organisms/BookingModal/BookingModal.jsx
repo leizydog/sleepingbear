@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import axios from '../../services/api';
-import './Bookings.css';
+import axios from '../../../services/api';
+
 
 const BookingModal = ({ property, onClose, onSuccess }) => {
   const [startDate, setStartDate] = useState('');

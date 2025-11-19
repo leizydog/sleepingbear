@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-import models
-import schemas_payment
-import auth
-from database import get_db
-from services.payment_service import PaymentService
+from app.models import all_models as models
+from app.schemas import schemas_payment
+from app.core import security as auth
+from app.db.session import get_db
+from app.services.payment_service import PaymentService
 from datetime import datetime
 import secrets
 

@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../../services/api';
+import { useAuth } from '../../../context/AuthContext'; // Updated path
+import api from '../../../services/api'; // Updated path
+import BookingModal from '../BookingModal/BookingModal'; // Updated path to sibling organism
 import './Bookings.css';
 
 const BookingList = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchBookings();
@@ -13,154 +18,68 @@ const BookingList = () => {
 
   const fetchBookings = async () => {
     try {
-      setLoading(true);
-      const response = await axios.get('/bookings/my-bookings');
+      const response = await api.get('/bookings/');
       setBookings(response.data);
-      setError(null);
+      setLoading(false);
     } catch (err) {
-      setError('Failed to load bookings');
-      console.error(err);
-    } finally {
+      setError('Failed to fetch bookings');
       setLoading(false);
     }
   };
 
-  const handleCancelBooking = async (bookingId) => {
-    const confirm = window.confirm('Are you sure you want to cancel this booking?');
-    if (!confirm) return;
-
+  const handleCreateBooking = async (bookingData) => {
     try {
-      await axios.delete(`/bookings/${bookingId}`);
-      alert('Booking cancelled successfully');
-      fetchBookings();
+      const response = await api.post('/bookings/', bookingData);
+      setBookings([...bookings, response.data]);
+      setIsModalOpen(false);
     } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to cancel booking');
+      console.error('Failed to create booking:', err);
+      throw err;
     }
   };
 
-  if (loading) {
-    return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <p>Loading bookings...</p>
-      </div>
-    );
-  }
+  if (loading) return <div className="loading">Loading bookings...</div>;
+  if (error) return <div className="error">{error}</div>;
 
-  if (error) {
-    return (
-      <div className="error-container">
-        <p className="error-message">{error}</p>
-        <button onClick={fetchBookings} className="btn btn-primary">
-          Retry
+  return (
+    <div className="bookings-container">
+      <div className="bookings-header">
+        <h2>My Bookings</h2>
+        <button className="btn-primary" onClick={() => setIsModalOpen(true)}>
+          New Booking
         </button>
       </div>
-    );
-  }
 
-  return (
-    <div className="booking-list-container">
-      <div className="booking-list-header">
-        <h1>My Bookings</h1>
+      <div className="bookings-list">
+        {bookings.length === 0 ? (
+          <p className="no-bookings">No bookings found.</p>
+        ) : (
+          bookings.map((booking) => (
+            <div key={booking.id} className="booking-card">
+              <div className="booking-info">
+                <h3>Booking #{booking.id}</h3>
+                <p>Property ID: {booking.property_id}</p>
+                <p>
+                  {new Date(booking.start_date).toLocaleDateString()} -{' '}
+                  {new Date(booking.end_date).toLocaleDateString()}
+                </p>
+                <span className={`status-badge ${booking.status}`}>
+                  {booking.status}
+                </span>
+              </div>
+              <div className="booking-amount">
+                ${booking.total_amount}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
-      {bookings.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">📅</div>
-          <h3>No bookings yet</h3>
-          <p>Start booking properties to see them here</p>
-        </div>
-      ) : (
-        <div className="bookings-grid">
-          {bookings.map((booking) => (
-            <BookingCard
-              key={booking.id}
-              booking={booking}
-              onCancel={handleCancelBooking}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const BookingCard = ({ booking, onCancel }) => {
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  const getDuration = () => {
-    const start = new Date(booking.start_date);
-    const end = new Date(booking.end_date);
-    return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'pending':
-        return '⏳';
-      case 'confirmed':
-        return '✓';
-      case 'cancelled':
-        return '✗';
-      case 'completed':
-        return '✓✓';
-      default:
-        return '•';
-    }
-  };
-
-  const canCancel = booking.status === 'pending' || booking.status === 'confirmed';
-
-  return (
-    <div className="booking-card-item">
-      <div className="booking-card-header">
-        <div className={`booking-status ${booking.status}`}>
-          <span>{getStatusIcon(booking.status)}</span>
-          <span>{booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}</span>
-        </div>
-        <div className="booking-id">Booking #{booking.id}</div>
-      </div>
-
-      <div className="booking-dates-section">
-        <div className="booking-date-item">
-          <div className="booking-date-label">Check-in</div>
-          <div className="booking-date-value">{formatDate(booking.start_date)}</div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', color: '#999' }}>→</div>
-        <div className="booking-date-item" style={{ textAlign: 'right' }}>
-          <div className="booking-date-label">Check-out</div>
-          <div className="booking-date-value">{formatDate(booking.end_date)}</div>
-        </div>
-      </div>
-
-      <div className="booking-duration-badge">
-        <span>⏱️</span>
-        <span>{getDuration()} days</span>
-      </div>
-
-      <div className="booking-total-section">
-        <div className="booking-total-label">Total Amount</div>
-        <div className="booking-total-amount">
-          ₱{booking.total_amount.toLocaleString()}
-        </div>
-      </div>
-
-      {canCancel && (
-        <div className="booking-actions">
-          <button
-            className="btn-cancel"
-            onClick={() => onCancel(booking.id)}
-          >
-            Cancel Booking
-          </button>
-        </div>
+      {isModalOpen && (
+        <BookingModal
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleCreateBooking}
+        />
       )}
     </div>
   );

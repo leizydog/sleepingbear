@@ -3,10 +3,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, extract, and_
 from datetime import datetime, timedelta
 from typing import Optional
-import models
-import schemas_reports
-import auth
-from database import get_db
+from app.models import all_models as models
+from app.schemas import schemas_reports
+from app.core import security as auth
+from app.db.session import get_db
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 

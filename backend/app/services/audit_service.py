@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import Request
-import models
+from app.models import all_models as models
 import json
 from typing import Optional
 

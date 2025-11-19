@@ -1,13 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from database import engine
-import models
-from routers import (auth, properties, bookings, payments, reports, audit
-                     , notifications)
-app = FastAPI()
-app.include_router(audit.router)
-app.include_router(notifications.router)
-
+from app.db.session import engine
+from app.models import all_models as models
+from app.api.v1 import (
+    auth, properties, bookings, payments, reports, 
+    audit, notifications
+)
 
 # Create tables
 models.Base.metadata.create_all(bind=engine)
@@ -27,12 +25,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
+# Include routers from the new v1 folder
 app.include_router(auth.router)
 app.include_router(properties.router)
 app.include_router(bookings.router)
 app.include_router(payments.router)
 app.include_router(reports.router)
+app.include_router(audit.router)
+app.include_router(notifications.router)
 
 @app.get("/")
 def read_root():
@@ -40,12 +40,7 @@ def read_root():
         "message": "Sleeping Bear Rental API",
         "version": "1.0.0",
         "status": "running",
-        "endpoints": {
-            "auth": "/auth",
-            "properties": "/properties",
-            "bookings": "/bookings",
-            "docs": "/docs"
-        }
+        "docs": "/docs"
     }
 
 @app.get("/health")

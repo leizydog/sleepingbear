@@ -1,7 +1,7 @@
 from pydantic import BaseModel, validator
 from datetime import datetime
 from typing import Optional
-from models import BookingStatus
+from app.models.all_models import BookingStatus  # Import BookingStatus here
 
 class BookingBase(BaseModel):
     property_id: int

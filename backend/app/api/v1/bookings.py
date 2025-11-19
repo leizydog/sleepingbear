@@ -3,13 +3,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
 from datetime import datetime
 from typing import List
-import models
-import schemas_booking
-import schemas_property
-from schemas import UserResponse
-import auth
-from database import get_db
-from services.audit_service import AuditService
+from app.models import all_models as models
+from app.schemas import schemas_booking
+from app.schemas import schemas_property
+from app.schemas.schemas import UserResponse
+from app.core import security as auth
+from app.db.session import get_db
+from app.services.audit_service import AuditService
 from fastapi import Request
 
 router = APIRouter(prefix="/bookings", tags=["Bookings"])

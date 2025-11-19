@@ -1,7 +1,7 @@
 from pydantic import BaseModel, validator
 from datetime import datetime
 from typing import Optional
-from models import PaymentStatus
+from app.models.all_models import PaymentStatus  # Import PaymentStatus here
 
 class PaymentCreate(BaseModel):
     booking_id: int
