@@ -15,14 +15,7 @@ const Dashboard = () => {
   return (
     <div className="dashboard-container">
       <nav className="dashboard-nav">
-        <div className="nav-brand">
-          <span className="logo-icon">🏢</span>
-          <span>Sleeping Bear</span>
-        </div>
-        <button onClick={handleLogout} className="btn-logout">
-          Logout
-        </button>
-      </nav>
+  </nav>
 
       <div className="dashboard-content">
         <div className="welcome-card">

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm # <-- NEW IMPORT
 from sqlalchemy.orm import Session
-from datetime import timedelta
 from app.schemas import schemas
 from app.models import all_models as models
 from app.core import security as auth
@@ -52,15 +52,23 @@ def register(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
         "user": db_user
     }
 
+# ⭐️ FIXED LOGIN ENDPOINT TO USE FORM DATA (OAuth2PasswordRequestForm) ⭐️
 @router.post("/login", response_model=schemas.Token)
-def login(user_credentials: schemas.UserLogin, db: Session = Depends(get_db)):
-    """Login user"""
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """Login user using standard OAuth2 form data."""
+    
+    # OAuth2PasswordRequestForm uses 'username' and 'password' keys. 
+    # We use 'username' to carry the user's email.
+    email = form_data.username
+    password = form_data.password
+    
     # Find user by email
     user = db.query(models.User).filter(
-        models.User.email == user_credentials.email
+        models.User.email == email
     ).first()
     
-    if not user or not auth.verify_password(user_credentials.password, user.hashed_password):
+    # Verify password
+    if not user or not auth.verify_password(password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",

@@ -1,195 +1,63 @@
+// src/components/organisms/PropertyList/PropertyList.jsx
 import React, { useState, useEffect } from 'react';
-import axios from '../../../services/api';
-import { useNavigate } from 'react-router-dom';
-import './Properties.css';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import Header from '../../common/Header'; 
+import SearchForm from '../SearchForm/SearchForm';
+
+const mockProperties = [
+    { id: 1, image_url: 'property_1.jpg', location: '123 Anywhere St., Any City St., 1234', unit_type: '1-Bedroom Condominium', price_per_month: 5000 },
+    { id: 2, image_url: 'property_2.jpg', location: '456 Uptown Blvd., New City, 5678', unit_type: '2-Bedroom Apartment', price_per_month: 25000 },
+    { id: 3, image_url: 'property_3.jpg', location: '789 Garden Rd., Suburbia, 9012', unit_type: 'Studio Type', price_per_month: 12000 },
+];
 
 const PropertyList = () => {
-  const navigate = useNavigate();
-  const [properties, setProperties] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [search, setSearch] = useState('');
-  const [filters, setFilters] = useState({
-    minPrice: '',
-    maxPrice: '',
-    bedrooms: '',
-  });
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const [properties, setProperties] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchProperties();
-  }, []);
+    useEffect(() => {
+        setTimeout(() => {
+            setProperties(mockProperties);
+            setLoading(false);
+        }, 500);
+    }, [searchParams]);
 
-  const fetchProperties = async (searchTerm = '', filterParams = {}) => {
-    try {
-      setLoading(true);
-      const params = {
-        search: searchTerm || undefined,
-        min_price: filterParams.minPrice || undefined,
-        max_price: filterParams.maxPrice || undefined,
-        bedrooms: filterParams.bedrooms || undefined,
-      };
-
-      const response = await axios.get('/properties', { params });
-      setProperties(response.data.properties);
-      setError(null);
-    } catch (err) {
-      setError('Failed to load properties');
-      console.error(err);
-    } finally {
-      setLoading(false);
+    if (loading) {
+        return <div className="loading-container"><p>Loading search results...</p></div>;
     }
-  };
 
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    setSearch(value);
-    fetchProperties(value, filters);
-  };
+    const handleBookNow = (propertyId) => {
+        navigate(`/property/${propertyId}`); 
+    };
 
-  const handleFilterChange = (key, value) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    fetchProperties(search, newFilters);
-  };
-
-  const clearFilters = () => {
-    setFilters({ minPrice: '', maxPrice: '', bedrooms: '' });
-    fetchProperties(search, {});
-  };
-
-  if (loading) {
     return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <p>Loading properties...</p>
-      </div>
+        <div className="property-list-page-wrapper">
+            <Header />
+            <div className="property-list-content">
+                <div className="property-list-search-bar">
+                    <SearchForm /> {/* Re-usable search form */}
+                    <p className="results-count">Results: {properties.length}</p>
+                </div>
+
+                <div className="property-list-grid">
+                    {properties.map((property) => (
+                        <div key={property.id} className="property-card">
+                            <div className="card-image"><span className="image-placeholder">🏠</span></div>
+                            <div className="card-details">
+                                <p className="card-location"><span className="icon">📍</span> Location: {property.location}</p>
+                                <p className="card-unit-type">Unit Type: {property.unit_type}</p>
+                                <p className="card-price">Price: ₱{property.price_per_month.toLocaleString()}/month</p>
+                                <button onClick={() => handleBookNow(property.id)} className="btn btn-book-now">
+                                    BOOK NOW &gt;
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
     );
-  }
-
-  if (error) {
-    return (
-      <div className="error-container">
-        <p className="error-message">{error}</p>
-        <button onClick={() => fetchProperties()} className="btn btn-primary">
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="property-list-container">
-      {/* Search and Filters */}
-      <div className="filters-section">
-        <div className="search-bar">
-          <input
-            type="text"
-            placeholder="Search properties..."
-            value={search}
-            onChange={handleSearch}
-            className="search-input"
-          />
-        </div>
-
-        <div className="filters">
-          <input
-            type="number"
-            placeholder="Min Price"
-            value={filters.minPrice}
-            onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-            className="filter-input"
-          />
-          <input
-            type="number"
-            placeholder="Max Price"
-            value={filters.maxPrice}
-            onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-            className="filter-input"
-          />
-          <select
-            value={filters.bedrooms}
-            onChange={(e) => handleFilterChange('bedrooms', e.target.value)}
-            className="filter-input"
-          >
-            <option value="">Any Bedrooms</option>
-            <option value="1">1 BR</option>
-            <option value="2">2 BR</option>
-            <option value="3">3 BR</option>
-            <option value="4">4+ BR</option>
-          </select>
-          <button onClick={clearFilters} className="btn-clear">
-            Clear Filters
-          </button>
-        </div>
-      </div>
-
-      {/* Property Grid */}
-      {properties.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">🏠</div>
-          <h3>No properties found</h3>
-          <p>Try adjusting your filters</p>
-        </div>
-      ) : (
-        <div className="property-grid">
-          {properties.map((property) => (
-            <PropertyCard
-              key={property.id}
-              property={property}
-              onClick={() => navigate(`/property/${property.id}`)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const PropertyCard = ({ property, onClick }) => {
-  return (
-    <div className="property-card" onClick={onClick}>
-      <div className="property-image">
-        {property.image_url ? (
-          <img src={property.image_url} alt={property.name} />
-        ) : (
-          <div className="property-image-placeholder">
-            <span>🏢</span>
-          </div>
-        )}
-        <div className="property-badge">Available</div>
-      </div>
-
-      <div className="property-content">
-        <h3 className="property-name">{property.name}</h3>
-        <p className="property-address">
-          <span className="icon">📍</span>
-          {property.address}
-        </p>
-
-        <div className="property-details">
-          <span className="detail-item">
-            <span className="icon">🛏️</span>
-            {property.bedrooms} BR
-          </span>
-          <span className="detail-item">
-            <span className="icon">🚿</span>
-            {property.bathrooms} BA
-          </span>
-          <span className="detail-item">
-            <span className="icon">📐</span>
-            {property.size_sqm} sqm
-          </span>
-        </div>
-
-        <div className="property-footer">
-          <div className="property-price">
-            ₱{property.price_per_month.toLocaleString()}/mo
-          </div>
-          <button className="btn-view">View Details</button>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 export default PropertyList;

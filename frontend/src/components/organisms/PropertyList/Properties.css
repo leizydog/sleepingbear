@@ -1,202 +1,229 @@
 .property-list-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 24px;
+max-width: 1400px;
+margin: 0 auto;
+padding: 24px;
 }
 
 .filters-section {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 24px;
+background: white;
+padding: 24px;
+border-radius: 12px;
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+margin-bottom: 24px;
 }
 
+/* UPDATED: Use Flexbox and relative positioning for the search bar */
 .search-bar {
-  margin-bottom: 16px;
+margin-bottom: 16px;
+display: flex;
+align-items: center;
+position: relative;
 }
 
+/* UPDATED: Added padding-right to prevent text overlapping the button */
 .search-input {
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 16px;
+width: 100%;
+padding: 12px 16px;
+padding-right: 40px; /* Space for the clear button */
+border: 1px solid #ddd;
+border-radius: 8px;
+font-size: 16px;
 }
 
 .search-input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+outline: none;
+border-color: #667eea;
+box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* NEW: Styles for the clear search button */
+.btn-clear-search {
+position: absolute;
+right: 8px; /* Position inside the search input area */
+background: none;
+border: none;
+color: #999;
+font-size: 18px;
+font-weight: 700;
+cursor: pointer;
+height: 100%;
+padding: 0 8px;
+display: flex;
+align-items: center;
+transition: color 0.2s;
+}
+
+.btn-clear-search:hover {
+color: #333;
 }
 
 .filters {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
+display: flex;
+gap: 12px;
+flex-wrap: wrap;
 }
 
 .filter-input {
-  flex: 1;
-  min-width: 150px;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
+flex: 1;
+min-width: 150px;
+padding: 10px 12px;
+border: 1px solid #ddd;
+border-radius: 8px;
+font-size: 14px;
 }
 
 .btn-clear {
-  padding: 10px 20px;
-  background: #f5f5f5;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s;
+padding: 10px 20px;
+background: #f5f5f5;
+border: none;
+border-radius: 8px;
+cursor: pointer;
+font-weight: 600;
+transition: all 0.3s;
 }
 
 .btn-clear:hover {
-  background: #e0e0e0;
+background: #e0e0e0;
 }
 
 .property-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+gap: 24px;
 }
 
 .property-card {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  transition: all 0.3s;
+background: white;
+border-radius: 12px;
+overflow: hidden;
+box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+cursor: pointer;
+transition: all 0.3s;
 }
 
 .property-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+transform: translateY(-4px);
+box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
 
 .property-image {
-  position: relative;
-  width: 100%;
-  height: 220px;
-  overflow: hidden;
+position: relative;
+width: 100%;
+height: 220px;
+overflow: hidden;
 }
 
 .property-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+width: 100%;
+height: 100%;
+object-fit: cover;
 }
 
 .property-image-placeholder {
-  width: 100%;
-  height: 100%;
-  background: #f0f0f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 60px;
+width: 100%;
+height: 100%;
+background: #f0f0f0;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 60px;
 }
 
 .property-badge {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: #28a745;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 600;
+position: absolute;
+top: 12px;
+right: 12px;
+background: #28a745;
+color: white;
+padding: 6px 12px;
+border-radius: 20px;
+font-size: 12px;
+font-weight: 600;
 }
 
 .property-content {
-  padding: 20px;
+padding: 20px;
 }
 
 .property-name {
-  font-size: 20px;
-  font-weight: 700;
-  margin: 0 0 8px 0;
-  color: #333;
+font-size: 20px;
+font-weight: 700;
+margin: 0 0 8px 0;
+color: #333;
 }
 
 .property-address {
-  color: #666;
-  font-size: 14px;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+color: #666;
+font-size: 14px;
+margin-bottom: 16px;
+display: flex;
+align-items: center;
+gap: 6px;
 }
 
 .property-details {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
+display: flex;
+gap: 16px;
+margin-bottom: 16px;
 }
 
 .detail-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  color: #666;
-  background: #f5f5f5;
-  padding: 6px 12px;
-  border-radius: 6px;
+display: flex;
+align-items: center;
+gap: 6px;
+font-size: 14px;
+color: #666;
+background: #f5f5f5;
+padding: 6px 12px;
+border-radius: 6px;
 }
 
 .property-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 16px;
-  border-top: 1px solid #eee;
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding-top: 16px;
+border-top: 1px solid #eee;
 }
 
 .property-price {
-  font-size: 22px;
-  font-weight: 700;
-  color: #667eea;
+font-size: 22px;
+font-weight: 700;
+color: #667eea;
 }
 
 .btn-view {
-  padding: 8px 16px;
-  background: #667eea;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s;
+padding: 8px 16px;
+background: #667eea;
+color: white;
+border: none;
+border-radius: 6px;
+cursor: pointer;
+font-weight: 600;
+transition: all 0.3s;
 }
 
 .btn-view:hover {
-  background: #5568d3;
+background: #5568d3;
 }
 
 .empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: #999;
+text-align: center;
+padding: 60px 20px;
+color: #999;
 }
 
 .empty-icon {
-  font-size: 80px;
-  margin-bottom: 20px;
+font-size: 80px;
+margin-bottom: 20px;
 }
 
 .empty-state h3 {
-  font-size: 24px;
-  color: #666;
-  margin: 0 0 8px 0;
+font-size: 24px;
+color: #666;
+margin: 0 0 8px 0;
 }
 
 .empty-state p {
-  font-size: 16px;
+font-size: 16px;
 }
