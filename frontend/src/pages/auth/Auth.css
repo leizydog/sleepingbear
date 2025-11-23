@@ -1,176 +1,97 @@
-/* Base Styles (Applying to both login and register pages) */
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f4f7f9; /* Light background */
-    margin: 0;
-    padding: 0;
+/*
+ * This CSS file recreates the visual style of the
+ * authentication card using standard CSS properties,
+ * mirroring the design created with Tailwind classes.
+ *
+ * Font: Inter is assumed to be loaded globally.
+ */
+
+/* Main Authentication Form Container */
+.auth-card {
+    /* Corresponds to: w-full max-w-md p-8 bg-white rounded-2xl shadow-2xl border border-gray-100 */
+    width: 100%;
+    max-width: 28rem; /* Tailwind 'max-w-md' */
+    padding: 2rem; /* Tailwind 'p-8' */
+    background-color: #ffffff;
+    border-radius: 1rem; /* Tailwind 'rounded-2xl' */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); /* Tailwind 'shadow-2xl' */
+    border: 1px solid #f3f4f6; /* Tailwind 'border-gray-100' */
+    margin: auto; /* To help center if not using flex parent */
 }
 
-/* --- Header Component Styles (Matching Wireframe) --- */
-.app-header {
+/* Form Title */
+.auth-card h3 {
+    /* Corresponds to: text-3xl font-extrabold text-gray-900 mb-6 text-center */
+    font-size: 1.875rem; /* Tailwind 'text-3xl' */
+    font-weight: 800; /* Tailwind 'font-extrabold' */
+    color: #111827; /* Tailwind 'text-gray-900' */
+    margin-bottom: 1.5rem; /* Tailwind 'mb-6' */
+    text-align: center;
+}
+
+/* Input Fields (Including text and password) */
+.auth-input {
+    /* Corresponds to: w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl transition-shadow */
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem; /* Tailwind 'pl-10 pr-4 py-3' */
+    border: 1px solid #d1d5db; /* Tailwind 'border-gray-300' */
+    border-radius: 0.75rem; /* Tailwind 'rounded-xl' */
+    transition: box-shadow 150ms ease-in-out, border-color 150ms ease-in-out;
+}
+
+/* Input Focus State */
+.auth-input:focus {
+    /* Corresponds to: focus:outline-none focus:ring-4 focus:ring-blue-100 */
+    outline: none;
+    border-color: #93c5fd; /* Light blue border */
+    box-shadow: 0 0 0 4px #dbeafe; /* Blue ring effect */
+}
+
+/* Submit Button */
+.auth-submit-btn {
+    /* Corresponds to: w-full flex items-center justify-center space-x-2 bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold transition-all shadow-md */
+    width: 100%;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 15px 5%;
-    background-color: #ffffff;
-    border-bottom: 1px solid #e0e0e0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.app-title {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #333;
-}
-
-.nav-link {
-    margin-left: 20px;
-    text-decoration: none;
-    color: #555;
-    font-size: 0.95rem;
-    transition: color 0.3s;
-}
-
-.nav-link:hover {
-    color: #007bff;
-}
-
-/* --- Authentication Wrapper and Form Container --- */
-.auth-page-wrapper {
-    padding: 50px 20px;
-    min-height: 100vh; 
-    display: flex;
     justify-content: center;
-    align-items: flex-start;
-}
-
-.auth-form-container {
-    background-color: #ffffff;
-    padding: 40px;
-    border-radius: 8px; /* Slightly less rounded than before, more like wireframe */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 500px; /* Slightly wider for the register form */
-}
-
-.auth-title {
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: #333;
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-/* --- Form Elements --- */
-.form-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 20px; /* Increased gap */
-}
-
-/* Register Page Specific Grid (for multi-column layout) */
-.register-form .form-grid {
-    display: grid;
-    /* Use 3 columns for desktop, stacking for mobile */
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 20px 15px;
-    margin-bottom: 20px;
-}
-
-/* Single column for login form (override register grid) */
-.login-form .form-grid {
-    grid-template-columns: 1fr;
-}
-
-.input-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.input-group label {
-    font-size: 0.8rem; /* Smaller, uppercase label */
-    font-weight: 700;
-    color: #555;
-    margin-bottom: 8px;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-}
-
-.input-group input {
-    padding: 12px;
-    border: 1px solid #dcdcdc; /* Lighter border color */
-    border-radius: 4px; /* Less rounded for a cleaner look */
-    font-size: 1rem;
-    transition: border-color 0.2s;
-    box-sizing: border-box; /* Ensures padding doesn't affect overall width */
-}
-
-.input-group input:focus {
-    border-color: #007bff;
-    outline: 2px solid rgba(0, 123, 255, 0.1); /* Subtle focus ring */
-    box-shadow: none;
-}
-
-/* --- Buttons and Messages --- */
-.btn-submit {
-    width: 100%;
-    padding: 15px;
-    background-color: #007bff; /* Primary Blue */
-    color: white;
-    border: none;
-    border-radius: 4px;
+    gap: 0.5rem; /* Tailwind 'space-x-2' */
+    background-color: #2563eb; /* Tailwind 'bg-blue-600' */
+    color: #ffffff;
+    padding: 0.75rem 2rem; /* Tailwind 'px-8 py-3' */
+    border-radius: 0.75rem; /* Tailwind 'rounded-xl' */
+    font-weight: 600; /* Tailwind 'font-semibold' */
+    transition: background-color 150ms ease-in-out, box-shadow 150ms ease-in-out;
     cursor: pointer;
-    font-size: 1.05rem;
-    font-weight: 600;
-    margin-top: 20px;
-    transition: background-color 0.3s, opacity 0.3s;
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); /* Tailwind 'shadow-md' */
 }
 
-.btn-submit:hover:not(:disabled) {
-    background-color: #0056b3;
+/* Submit Button Hover State */
+.auth-submit-btn:hover {
+    /* Corresponds to: hover:bg-blue-700 hover:shadow-lg */
+    background-color: #1d4ed8; /* Tailwind 'hover:bg-blue-700' */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1); /* Tailwind 'hover:shadow-lg' */
 }
 
-.btn-submit:disabled {
-    background-color: #a0c9f8;
+/* Disabled State */
+.auth-submit-btn:disabled {
+    /* Corresponds to: disabled:opacity-50 */
+    opacity: 0.5;
     cursor: not-allowed;
-    opacity: 0.8;
 }
 
-.error-message {
-    color: #dc3545;
-    text-align: center;
-    margin: 15px 0 0;
-    font-size: 0.9rem;
+/* Toggle Link Button */
+.auth-toggle-btn {
+    /* Corresponds to: text-blue-600 hover:text-blue-800 font-medium transition duration-150 */
+    color: #2563eb; /* Tailwind 'text-blue-600' */
+    font-weight: 500; /* Tailwind 'font-medium' */
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: color 150ms ease-in-out;
 }
 
-.auth-link-footer {
-    text-align: center;
-    margin-top: 30px; /* More space below form */
-    font-size: 0.95rem;
-    color: #777;
-}
-
-.link-text {
-    color: #007bff;
-    text-decoration: none;
-    font-weight: 500;
-}
-
-.link-text:hover {
-    text-decoration: underline;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .auth-form-container {
-        padding: 30px 20px;
-        margin: 20px 0;
-        max-width: 100%;
-    }
-
-    /* Stack inputs for register form on mobile */
-    .register-form .form-grid {
-        grid-template-columns: 1fr; 
-        gap: 20px;
-    }
+.auth-toggle-btn:hover {
+    color: #1e40af; /* Tailwind 'hover:text-blue-800' */
 }

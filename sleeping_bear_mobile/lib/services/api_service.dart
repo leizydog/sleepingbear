@@ -6,7 +6,8 @@ import 'package:sleeping_bear_mobile/models/payment.dart';
 import 'package:sleeping_bear_mobile/models/property.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:8000'; // Android emulator
+ static const String baseUrl = 'http://192.168.1.11:8000';
+  // Android emulator
   // Use 'http://localhost:8000' for iOS simulator
   // Use your computer's IP for physical devices (e.g., 'http://192.168.1.100:8000')
     

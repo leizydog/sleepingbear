@@ -1,68 +1,93 @@
-// src/pages/auth/RegisterPage.jsx
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from '../../services/api'; 
-import Header from '../../components/common/Header'; 
-import './Auth.css';
+import { useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 
 const RegisterPage = () => {
-    const [formData, setFormData] = useState({
-        first_name: '', middle_name: '', last_name: '',
-        email: '', contact_number: '', password: '',
-    });
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+  const [showPass, setShowPass] = useState(false);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
+  const handleRegister = (e) => {
+    e.preventDefault();
+    console.log("Registering...");
+    // Simulate success
+    navigate('/login');
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError(null);
-        setLoading(true);
-        try {
-            const dataToSend = { ...formData };
-            if (!dataToSend.middle_name) { delete dataToSend.middle_name; }
-            
-            // await axios.post('/auth/register', dataToSend);
-            await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
-            
-            navigate('/login'); 
-        } catch (err) {
-            setError(err.response?.data?.message || 'Registration failed. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
+  return (
+    <div className="w-full max-w-[800px] bg-white/95 backdrop-blur-xl rounded-[40px] px-10 py-14 shadow-2xl animate-fade-in border border-white/50">
+      
+      <div className="text-center mb-10">
+        <h2 className="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">Create Account</h2>
+        <p className="text-gray-500 font-medium">Join us to list or book properties</p>
+      </div>
 
-    return (
-        <div className="auth-page-wrapper">
-            <Header /> 
-            <div className="auth-form-container">
-                <h1 className="auth-title">Register Account</h1>
-                <form onSubmit={handleSubmit} className="register-form">
-                    <div className="form-grid">
-                        <div className="input-group"><label htmlFor="first_name">FIRST NAME</label><input type="text" id="first_name" name="first_name" value={formData.first_name} onChange={handleChange} required/></div>
-                        <div className="input-group"><label htmlFor="middle_name">MIDDLE NAME (OPTIONAL)</label><input type="text" id="middle_name" name="middle_name" value={formData.middle_name} onChange={handleChange}/></div>
-                        <div className="input-group"><label htmlFor="last_name">LAST NAME</label><input type="text" id="last_name" name="last_name" value={formData.last_name} onChange={handleChange} required/></div>
-                        <div className="input-group"><label htmlFor="email">EMAIL ADDRESS</label><input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required/></div>
-                        <div className="input-group"><label htmlFor="contact_number">CONTACT NUMBER</label><input type="tel" id="contact_number" name="contact_number" value={formData.contact_number} onChange={handleChange} required/></div>
-                        <div className="input-group"><label htmlFor="password">PASSWORD</label><input type="password" id="password" name="password" placeholder="**********" value={formData.password} onChange={handleChange} required/></div>
-                    </div>
-                    {error && <p className="error-message">{error}</p>}
-                    <button type="submit" className="btn btn-submit" disabled={loading}>
-                        {loading ? 'Submitting...' : 'Submit'}
-                    </button>
-                </form>
-                <p className="auth-link-footer">
-                    Already have an account? <Link to="/login" className="link-text">Login Account</Link>
-                </p>
+      <form onSubmit={handleRegister}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          {/* Left Column */}
+          <div className="space-y-6">
+            <div className="group">
+              <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">First Name</label>
+              <input type="text" className="w-full border-b-2 border-gray-200 bg-transparent py-2 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors" placeholder="Enter first name" />
             </div>
+            <div className="group">
+              <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Middle Name (Optional)</label>
+              <input type="text" className="w-full border-b-2 border-gray-200 bg-transparent py-2 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors" placeholder="Enter middle name" />
+            </div>
+            <div className="group">
+              <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Last Name</label>
+              <input type="text" className="w-full border-b-2 border-gray-200 bg-transparent py-2 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors" placeholder="Enter last name" />
+            </div>
+          </div>
+
+          {/* Right Column */}
+          <div className="space-y-6">
+            <div className="group">
+              <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Email Address</label>
+              <input type="email" className="w-full border-b-2 border-gray-200 bg-transparent py-2 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors" placeholder="name@example.com" />
+            </div>
+            <div className="group">
+              <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Contact Number</label>
+              <input type="tel" className="w-full border-b-2 border-gray-200 bg-transparent py-2 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors" placeholder="09XX XXX XXXX" />
+            </div>
+            <div className="group relative">
+              <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Password</label>
+              <input 
+                type={showPass ? "text" : "password"} 
+                className="w-full border-b-2 border-gray-200 bg-transparent py-2 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors" 
+                placeholder="••••••••"
+              />
+              <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-2 bottom-3 text-gray-400 hover:text-brand-purple">
+                {showPass ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+          </div>
         </div>
-    );
+
+        {/* Submit Button */}
+        <div className="pt-10 flex justify-center">
+          <button className="w-full md:w-1/2 bg-brand-purple text-white font-bold py-4 rounded-2xl shadow-xl shadow-purple-200 hover:bg-brand-darkPurple transition-all transform hover:-translate-y-1">
+            Submit
+          </button>
+        </div>
+
+        {/* Login Link (THE FIX) */}
+        <div className="text-center mt-6">
+          <p className="text-gray-500 text-sm">
+            Already have an account?{' '}
+            <button 
+              type="button" 
+              onClick={() => navigate('/login')} 
+              className="text-brand-purple font-bold hover:underline"
+            >
+              Login Account
+            </button>
+          </p>
+        </div>
+
+      </form>
+    </div>
+  );
 };
 
 export default RegisterPage;

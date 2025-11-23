@@ -1,150 +1,59 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './Auth.css';
-// import { useAuth } from '../../context/AuthContext'; // <-- Removed failing import
-
-// ⭐️ MOCK AUTH CONTEXT AND HOOK ⭐️
-// This mock is included to resolve the "Could not resolve" error and allow the component to compile.
-// In a real application, you would ensure the path to your actual AuthContext is correct.
-const useAuth = () => {
-    // Provide a mock login function that simply logs the success.
-    const mockLogin = (accessToken, user) => {
-        console.log("MOCK AUTH: Login successful. Token obtained.", accessToken);
-        console.log("MOCK AUTH: User data received:", user);
-        // This simulates storing the user token and state in a global context.
-    };
-    return { 
-        login: mockLogin,
-        // Assuming your real context provides user data or other necessary values
-    };
-};
-// ⭐️ END MOCK ⭐️
-
-const API_URL = 'http://127.0.0.1:8000/auth/login';
+import { Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext'; // Import Auth
 
 const LoginPage = () => {
-    const navigate = useNavigate();
-    // Using the mock hook to prevent compilation failure
-    const { login: authContextLogin } = useAuth(); 
+  const navigate = useNavigate();
+  const { login } = useAuth(); // Get login function
+  const [showPass, setShowPass] = useState(false);
+
+  const handleLogin = (e) => {
+    e.preventDefault();
     
-    const [formData, setFormData] = useState({
-        email: '',
-        password: '',
-    });
-    const [error, setError] = useState(null);
-    const [loading, setLoading] = useState(false);
+    // 1. Log the user in (Set Global State)
+    login({ name: 'Ann', email: 'john@example.com' });
+    
+    // 2. Redirect to Results Page
+    navigate('/search'); 
+  };
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
+  return (
+    <div className="w-full max-w-[480px] bg-white/95 backdrop-blur-xl rounded-[40px] px-10 py-14 shadow-2xl animate-fade-in border border-white/50">
+      <div className="text-center mb-10">
+        <h2 className="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">Welcome Back</h2>
+        <p className="text-gray-500 font-medium">Login to your account</p>
+      </div>
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setError(null);
-        setLoading(true);
-
-        // 1. Prepare data as URLSearchParams (Form Data)
-        const requestData = new URLSearchParams();
-        // The backend uses OAuth2PasswordRequestForm, which expects 'username' and 'password'
-        requestData.append('username', formData.email); 
-        requestData.append('password', formData.password); 
-
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                headers: {
-                    // 2. Set Content-Type header correctly for form data
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                // 3. Send the URL-encoded string as the body
-                body: requestData.toString(),
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                // Handle HTTP errors
-                let errorMessage = data.detail || "Login failed due to server error.";
-                
-                if (response.status === 401) {
-                    errorMessage = "Incorrect email or password.";
-                } else if (response.status === 422) {
-                    // This means the input still failed validation (e.g., email format invalid)
-                    console.error("Validation error details:", data);
-                    errorMessage = "Invalid input format. Please check your email and password fields.";
-                }
-                
-                throw new Error(errorMessage);
-            }
-
-            // Handle successful login
-            // The response data contains { access_token, token_type, user }
-            const { access_token, user } = data;
-
-            // Update AuthContext state
-            authContextLogin(access_token, user); 
-            
-            // Redirect based on role
-            // NOTE: If using the MOCK hook, navigation won't work in this specific editor environment,
-            // but the logic is correct for a real application setup.
-            if (user.role === 'admin') {
-                navigate('/admin');
-            } else if (user.role === 'owner') {
-                navigate('/owner/dashboard');
-            } else {
-                navigate('/');
-            }
-
-        } catch (err) {
-            console.error('Login error:', err.message || err);
-            setError(err.message || 'An unknown error occurred during login.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // ... rest of your component rendering the form
-    return (
-        // I've simplified the styling to focus on functionality
-        <div style={{ padding: '20px', maxWidth: '400px', margin: 'auto' }}>
-            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
-                <h2>Login Account</h2>
-                
-                <input 
-                    type="email" 
-                    name="email" 
-                    placeholder="EMAIL ADDRESS"
-                    value={formData.email} 
-                    onChange={handleChange} 
-                    required 
-                    style={{ padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
-                />
-                <input 
-                    type="password" 
-                    name="password" 
-                    placeholder="PASSWORD"
-                    value={formData.password} 
-                    onChange={handleChange} 
-                    required 
-                    style={{ padding: '10px', border: '1px solid #ddd', borderRadius: '4px' }}
-                />
-                
-                {error && <p style={{ color: 'red', margin: 0, fontSize: '0.9em' }}>{error}</p>}
-                
-                <button 
-                    type="submit" 
-                    disabled={loading}
-                    style={{ padding: '10px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                >
-                    {loading ? 'Logging in...' : 'Login'}
-                </button>
-                
-                <p style={{ margin: 0, textAlign: 'center', fontSize: '0.9em' }}>
-                    Don't have an account? <a href="/register" style={{ color: '#007bff', textDecoration: 'none' }}>Register Account</a>
-                </p>
-            </form>
+      <form onSubmit={handleLogin} className="space-y-6">
+        <div className="group">
+          <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Email Address</label>
+          <input type="email" className="w-full border-b-2 border-gray-200 bg-transparent py-3 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors placeholder-gray-300" placeholder="name@example.com" />
         </div>
-    );
+
+        <div className="group relative">
+          <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Password</label>
+          <input type={showPass ? "text" : "password"} className="w-full border-b-2 border-gray-200 bg-transparent py-3 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors placeholder-gray-300" placeholder="••••••••" />
+          <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-2 bottom-3 text-gray-400 hover:text-brand-purple">
+            {showPass ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+
+        <div className="pt-6">
+          <button type="submit" className="w-full bg-brand-purple text-white font-bold py-4 rounded-2xl shadow-xl shadow-purple-200 hover:bg-brand-darkPurple transition-all transform hover:-translate-y-1">
+            Login
+          </button>
+        </div>
+
+        <div className="text-center mt-6">
+          <p className="text-gray-500 text-sm">
+            Don't have an account?{' '}
+            <button type="button" onClick={() => navigate('/register')} className="text-brand-purple font-bold hover:underline">Register Account</button>
+          </p>
+        </div>
+      </form>
+    </div>
+  );
 };
 
 export default LoginPage;
