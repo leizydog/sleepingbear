@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles  # Import StaticFiles
+import os
 from app.db.session import engine
 from app.models import all_models as models
 from app.api.v1 import (
@@ -16,16 +18,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# --- NEW: Create static directory for images ---
+os.makedirs("static/uploads", exist_ok=True)
+# Mount the static directory to serve images at /static
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configure properly in production
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers from the new v1 folder
+# Include routers
 app.include_router(auth.router)
 app.include_router(properties.router)
 app.include_router(bookings.router)

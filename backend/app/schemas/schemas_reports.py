@@ -31,7 +31,7 @@ class PropertyPerformance(BaseModel):
     property_name: str
     total_bookings: int
     total_revenue: float
-    average_rating: Optional[float]
+    # average_rating removed as requested
     occupancy_rate: float
 
 class DashboardStats(BaseModel):

@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { AlertTriangle, Loader2 } from 'lucide-react'; // Removed Download, X
 import Header from '../../components/organisms/Header';
 import StatsCards from '../../components/organisms/StatsCards';
 import BookingCard from '../../components/molecules/BookingCard';
 import Icon from '../../components/atoms/Icon'; 
 import { useAuth } from '../../context/AuthContext';
-import { AlertTriangle, Download, X } from 'lucide-react'; // Added icons for modal
+import { bookingAPI } from '../../services/api';
 
-// --- Modal Component for Details and Confirmation (Defined outside the main component) ---
+// --- Modal Component ---
 const ActionModal = ({ isOpen, onClose, title, content, actions }) => {
   if (!isOpen) return null;
   
@@ -35,41 +36,44 @@ const ActionModal = ({ isOpen, onClose, title, content, actions }) => {
   );
 };
 
-
-const initialBookings = [
-    {
-      id: 'BKG-301', bookingId: 'BKG-301',
-      propertyName: '2-Bedroom Condo in Pasig', location: '123 Pasig St., Pasig City',
-      unitType: '2-Bedroom', price: '₱25,000', totalAmount: '₱900,000', checkIn: 'Aug 1, 2025', checkOut: 'Aug 1, 2028', duration: '3 years',
-      status: 'confirmed', paymentStatus: 'paid', bookingDate: 'July 15, 2025'
-    },
-    {
-      id: 'BKG-302', bookingId: 'BKG-302',
-      propertyName: 'Studio Unit in BGC', location: '456 BGC, Taguig City',
-      unitType: 'Studio', price: '₱18,000', totalAmount: '₱216,000', checkIn: 'Sep 1, 2025', checkOut: 'Sep 1, 2026', duration: '1 year',
-      status: 'pending', paymentStatus: 'pending', bookingDate: 'August 1, 2025'
-    },
-    {
-      id: 'BKG-303', bookingId: 'BKG-303',
-      propertyName: '1-Bedroom Condo in Makati', location: '789 Ayala Ave., Makati City',
-      unitType: '1-Bedroom', price: '₱22,000', totalAmount: '₱264,000', checkIn: 'Jun 1, 2024', checkOut: 'Jun 1, 2025', duration: '1 year',
-      status: 'completed', paymentStatus: 'paid', bookingDate: 'May 15, 2024'
-    },
-    {
-      id: 'BKG-304', bookingId: 'BKG-304',
-      propertyName: 'Luxury Penthouse in Ortigas', location: '101 EDSA, Ortigas Center',
-      unitType: '3-Bedroom Penthouse', price: '₱45,000', totalAmount: '₱540,000', checkIn: 'Oct 1, 2025', checkOut: 'Oct 1, 2026', duration: '1 year',
-      status: 'cancelled', paymentStatus: 'refunded', bookingDate: 'August 10, 2025'
-    }
-];
-
 const BookingPage = () => {
   const [activeFilter, setActiveFilter] = useState('all');
-  const [bookings, setBookings] = useState(initialBookings);
+  const [bookings, setBookings] = useState([]); 
+  const [loading, setLoading] = useState(true);
   const [modalState, setModalState] = useState({ isOpen: false, type: null, data: null });
   const { user } = useAuth();
 
-  // --- HANDLERS ---
+  // 1. Fetch Real Bookings
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const response = await bookingAPI.getMyBookings();
+        const formatted = response.data.map(b => ({
+            id: b.id, 
+            bookingId: `BKG-${b.id}`,
+            propertyName: b.property?.name || 'Unknown Property', 
+            location: b.property?.address || '',
+            unitType: `${b.property?.bedrooms || 1}-Bedroom`,
+            price: `₱${b.total_amount.toLocaleString()}`,
+            totalAmount: `₱${b.total_amount.toLocaleString()}`,
+            checkIn: new Date(b.start_date).toLocaleDateString(),
+            checkOut: new Date(b.end_date).toLocaleDateString(),
+            status: b.status, 
+            paymentStatus: b.payments?.[0]?.status || 'pending',
+            bookingDate: new Date(b.created_at).toLocaleDateString()
+        }));
+        setBookings(formatted);
+      } catch (error) {
+        console.error("Error fetching bookings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (user) fetchBookings();
+  }, [user]);
+
+  // --- Handlers ---
   
   const handleViewDetails = (id) => {
     const booking = bookings.find(b => b.id === id);
@@ -77,32 +81,20 @@ const BookingPage = () => {
   };
 
   const handleDownloadReceipt = (booking) => {
-    setModalState({ 
-        isOpen: true, 
-        type: 'receipt', 
-        data: booking 
-    });
+    setModalState({ isOpen: true, type: 'receipt', data: booking });
   };
 
   const handleCancelBooking = (booking) => {
-    setModalState({ 
-        isOpen: true, 
-        type: 'confirm_cancel', 
-        data: booking 
-    });
+    setModalState({ isOpen: true, type: 'confirm_cancel', data: booking });
   };
 
-  const confirmCancellation = (id) => {
-    setBookings(prevBookings => 
-        prevBookings.map(b => 
-            b.id === id ? { ...b, status: 'cancelled', paymentStatus: 'refunded' } : b
-        )
-    );
+  const confirmCancellation = async (id) => {
+    // In a real app, you would call API here: await bookingAPI.cancel(id)
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'cancelled' } : b));
     setModalState({ isOpen: false, type: null, data: null });
-    setActiveFilter('cancelled');
   };
 
-  // --- MODAL RENDER LOGIC ---
+  // --- Modal Logic ---
 
   const renderModalContent = () => {
     const { type, data } = modalState;
@@ -116,9 +108,8 @@ const BookingPage = () => {
                 <p><strong>Location:</strong> {data.location}</p>
                 <p><strong>Unit Type:</strong> {data.unitType}</p>
                 <p><strong>Total Amount:</strong> {data.totalAmount}</p>
-                <p><strong>Check-in/out:</strong> {data.checkIn} — {data.checkOut} ({data.duration})</p>
+                <p><strong>Check-in/out:</strong> {data.checkIn} — {data.checkOut}</p>
                 <p><strong>Current Status:</strong> {data.status.toUpperCase()}</p>
-                <p className="text-gray-500 pt-2">Detailed property information and contact details are available upon viewing.</p>
             </div>
         );
     }
@@ -127,8 +118,7 @@ const BookingPage = () => {
             <div className="text-center p-4">
                 <AlertTriangle size={40} className="text-red-500 mx-auto mb-3" />
                 <h4 className="font-bold text-lg">Confirm Cancellation</h4>
-                <p className="text-red-600 mt-2">Are you sure you want to cancel booking **{data.bookingId}**?</p>
-                <p className="text-sm text-gray-600">This action is permanent and will trigger a refund request.</p>
+                <p className="text-red-600 mt-2">Are you sure you want to cancel booking <strong>{data.bookingId}</strong>?</p>
             </div>
         );
     }
@@ -137,7 +127,7 @@ const BookingPage = () => {
             <div className="text-center p-4">
                 <Icon name="Download" size={40} className="text-blue-500 mx-auto mb-3" />
                 <h4 className="font-bold text-lg">Receipt Ready</h4>
-                <p className="text-gray-600 mt-2">A PDF receipt for booking **{data.bookingId}** is ready to download.</p>
+                <p className="text-gray-600 mt-2">Receipt for <strong>{data.bookingId}</strong> is ready.</p>
             </div>
         );
     }
@@ -152,7 +142,7 @@ const BookingPage = () => {
             <>
                 <button onClick={() => setModalState({ isOpen: false })} className="px-4 py-2 bg-gray-200 rounded-lg font-medium">Close</button>
                 {type === 'receipt' && (
-                    <button onClick={() => alert("Downloading receipt...")} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium">Download</button>
+                    <button onClick={() => alert("Downloading...")} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium">Download PDF</button>
                 )}
             </>
         );
@@ -168,8 +158,7 @@ const BookingPage = () => {
     return null;
   };
 
-
-  // --- MAIN RENDER ---
+  // --- Main Render ---
   const tabs = ['all', 'confirmed', 'pending', 'completed', 'cancelled'];
   const filteredBookings = activeFilter === 'all'
     ? bookings
@@ -181,14 +170,14 @@ const BookingPage = () => {
 
       <div className="max-w-7xl mx-auto px-6 py-10">
         
-        {/* Page Header and Stats */}
         <div className="mb-8">
           <h1 className="text-3xl font-serif font-bold text-gray-900 mb-2">My Bookings</h1>
           <p className="text-gray-500">Track and manage all your property bookings</p>
         </div>
-        <StatsCards bookings={bookings} />
+        
+        {!loading && <StatsCards bookings={bookings} />}
 
-        {/* Tab Navigation (Filter UI) */}
+        {/* Filter UI */}
         <div className="bg-white rounded-xl shadow-sm mb-8 px-6 pt-2 border border-gray-100">
           <div className="flex gap-8 overflow-x-auto scrollbar-hide">
             {tabs.map(tab => {
@@ -210,9 +199,13 @@ const BookingPage = () => {
           </div>
         </div>
 
-        {/* Bookings List */}
+        {/* List */}
         <div className="space-y-6 animate-fade-in">
-          {filteredBookings.length > 0 ? (
+          {loading ? (
+            <div className="flex justify-center py-20">
+                <Loader2 className="animate-spin text-gray-400" size={40} />
+            </div>
+          ) : filteredBookings.length > 0 ? (
             filteredBookings.map((booking) => (
               <BookingCard 
                 key={booking.id} 

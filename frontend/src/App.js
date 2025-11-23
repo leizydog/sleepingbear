@@ -16,7 +16,7 @@ import ConfirmationPage from './pages/booking/ConfirmationPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import OwnerDashboard from './pages/owner/OwnerDashboard'; 
 import AddListingPage from './pages/owner/AddListingPage';
-import AdminLoginPage from './pages/admin/AdminLoginPage';
+
 import SettingsPage from './pages/settings/SettingsPage';
 
 // --- CSS ---
@@ -25,8 +25,7 @@ import './index.css';
 // Destructuring the Theme Provider from the imported module
 const { ThemeProvider } = ThemeModule; 
 
-
-// --- Placeholder Component (Defined below imports) ---
+// --- Placeholder Component ---
 const Placeholder = ({ title }) => (
   <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-800 transition-colors">
     <div className="text-center">
@@ -41,7 +40,7 @@ const Placeholder = ({ title }) => (
 function App() {
   return (
     <AuthProvider>
-      <ThemeProvider> {/* Uses the fixed Theme Provider */}
+      <ThemeProvider>
         <Router>
           <Routes>
             {/* Public Routes */}
@@ -51,7 +50,7 @@ function App() {
             {/* Auth Routes */}
             <Route path="/login" element={<PublicLayout><LoginPage /></PublicLayout>} />
             <Route path="/register" element={<PublicLayout><RegisterPage /></PublicLayout>} />
-            <Route path="/admin/login" element={<PublicLayout><AdminLoginPage /></PublicLayout>} />
+            
 
             {/* Private User Flow */}
             <Route path="/bookings" element={<BookingPage />} />
@@ -60,6 +59,7 @@ function App() {
             <Route path="/settings" element={<SettingsPage />} />
 
             {/* Dashboards */}
+            {/* FIX: Added '/>' at the end of this line */}
             <Route path="/admin/*" element={<AdminDashboard />} />
             <Route path="/owner/dashboard" element={<OwnerDashboard />} />
             <Route path="/owner/add-listing" element={<AddListingPage />} />

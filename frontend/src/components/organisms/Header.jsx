@@ -1,13 +1,15 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User } from 'lucide-react'; // Ensure ArrowLeft is imported
+import { ArrowLeft } from 'lucide-react'; 
 import AccountDropdown from './AccountDropdown';
+
+// IMPORT LOGO
+import logo from '../../assets/logo.jpg'; 
 
 const Header = ({ isLoggedIn = true }) => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Check if the current page is the Login or Register route
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
 
   const handleListPlace = () => {
@@ -19,32 +21,33 @@ const Header = ({ isLoggedIn = true }) => {
   };
 
   return (
-    <header className="flex justify-between items-center px-8 py-4 bg-white/90 backdrop-blur-md border-b border-gray-100 sticky top-0 z-[100] shadow-sm">
+    // CHANGE: Replaced 'sticky' with 'fixed top-0 left-0 w-full' to make it stable
+    <header className="fixed top-0 left-0 w-full flex justify-between items-center px-8 py-3 bg-white/90 backdrop-blur-md border-b border-gray-100 z-[100] shadow-sm transition-all duration-300">
+      
       {/* Logo Section */}
-      <Link to="/" className="flex items-center gap-3 group no-underline">
-        <div className="bg-[#4b0082] rounded-xl w-10 h-10 flex items-center justify-center text-white font-bold text-xl shadow-md transition-transform group-hover:scale-105 duration-300">
-          🐻
-        </div>
+      <Link to="/" className="flex items-center gap-4 group no-underline">
+        <img 
+            src={logo} 
+            alt="Sleeping Bear Logo" 
+            className="w-14 h-14 rounded-2xl object-cover shadow-md transition-transform group-hover:scale-105 duration-300"
+        />
         <div>
-          <h1 className="text-xl font-extrabold text-gray-900 leading-none tracking-tight font-serif">Sleeping Bear</h1>
-          <p className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Property Rentals</p>
+          <h1 className="text-2xl font-extrabold text-gray-900 leading-none tracking-tight font-serif">Sleeping Bear</h1>
+          <p className="text-xs font-bold text-gray-500 tracking-widest uppercase mt-1">Property Rentals</p>
         </div>
       </Link>
 
-      {/* Navigation / Back Button Logic */}
+      {/* Navigation */}
       <nav className="flex items-center gap-8">
-        
         {isAuthPage ? (
-          // AUTH PAGE: Show only the BACK button
           <Link 
-            to="/" // Destination is the root path (Landing Page)
+            to="/" 
             className="flex items-center gap-2 text-gray-700 font-bold hover:text-[#4b0082] transition-colors"
           >
             <ArrowLeft size={20} />
             Back to Home
           </Link>
         ) : (
-          // STANDARD NAVIGATION
           <>
             <Link to="/search" className="text-sm font-bold text-gray-600 hover:text-[#a86add] transition-colors uppercase tracking-wide">
               Search

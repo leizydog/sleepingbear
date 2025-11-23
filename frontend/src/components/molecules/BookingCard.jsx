@@ -1,16 +1,24 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import Icon from '../atoms/Icon';
 import StatusBadge from './StatusBadge';
 
 const BookingCard = ({ booking, onView, onDownload, onCancel }) => {
+  const navigate = useNavigate(); // Initialize hook
+
   const isConfirmed = booking.status.toLowerCase() === 'confirmed';
   const isPending = booking.status.toLowerCase() === 'pending';
-  const isPaid = booking.paymentStatus.toLowerCase() === 'paid';
+  const isPaid = booking.paymentStatus.toLowerCase() === 'paid' || booking.paymentStatus.toLowerCase() === 'completed';
+
+  // Handler to go to payment page
+  const handlePayNow = () => {
+    navigate('/payment', { state: { bookingId: booking.id } });
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
       <div className="p-6">
-        {/* Top Section: Title, Location, ID, Status, Price (Keep existing structure) */}
+        {/* Top Section: Title, Location, ID, Status, Price */}
         <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
           
           {/* Left: Icon & Info */}
@@ -39,7 +47,7 @@ const BookingCard = ({ booking, onView, onDownload, onCancel }) => {
           </div>
         </div>
 
-        {/* Middle Section: Dates & Payment Status (Keep existing structure) */}
+        {/* Middle Section: Dates & Payment Status */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 py-6 border-t border-b border-gray-100">
           <div className="flex items-start gap-3"><Icon name="Calendar" size={20} className="text-blue-500 mt-1" /><div><p className="text-xs text-gray-500 mb-1">Check-in</p><p className="font-bold text-gray-900">{booking.checkIn}</p></div></div>
           <div className="flex items-start gap-3"><Icon name="Calendar" size={20} className="text-blue-500 mt-1" /><div><p className="text-xs text-gray-500 mb-1">Check-out</p><p className="font-bold text-gray-900">{booking.checkOut}</p></div></div>
@@ -53,32 +61,42 @@ const BookingCard = ({ booking, onView, onDownload, onCancel }) => {
             Booked on: {booking.bookingDate}
           </p>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap justify-end">
             {/* 1. View Details Button */}
             <button 
                 onClick={() => onView(booking.id)}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium text-sm hover:bg-blue-700 transition-colors shadow-sm"
+                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors"
             >
               View Details
             </button>
 
-            {/* 2. Download Receipt (Conditional on Paid/Confirmed) */}
-            {(isConfirmed || isPaid) && (
+            {/* 2. PAY NOW Button (Only if Pending & Not Paid) */}
+            {isPending && !isPaid && (
               <button 
-                  onClick={() => onDownload(booking)} // Pass the whole booking object
-                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-50 transition-colors"
+                  onClick={handlePayNow}
+                  className="px-6 py-2 bg-brand-purple text-white rounded-lg font-bold text-sm hover:bg-purple-700 transition-colors shadow-md animate-pulse"
               >
-                Download Receipt
+                Pay Now
               </button>
             )}
 
-            {/* 3. Cancel Booking (Conditional on Pending) */}
+            {/* 3. Download Receipt (Conditional on Paid/Confirmed) */}
+            {(isConfirmed || isPaid) && (
+              <button 
+                  onClick={() => onDownload(booking)} 
+                  className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-50 transition-colors"
+              >
+                Receipt
+              </button>
+            )}
+
+            {/* 4. Cancel Booking (Conditional on Pending) */}
             {isPending && (
               <button 
-                  onClick={() => onCancel(booking)} // Pass the whole booking object
-                  className="px-6 py-2 bg-red-600 text-white rounded-lg font-medium text-sm hover:bg-red-700 transition-colors shadow-sm"
+                  onClick={() => onCancel(booking)}
+                  className="px-6 py-2 bg-red-50 text-red-600 border border-red-200 rounded-lg font-medium text-sm hover:bg-red-100 transition-colors"
               >
-                Cancel Booking
+                Cancel
               </button>
             )}
           </div>

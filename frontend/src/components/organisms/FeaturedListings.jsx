@@ -13,6 +13,7 @@ const FeaturedListings = ({ properties }) => {
         {properties.map((prop) => (
           <PropertyCard 
             key={prop.id}
+            id={prop.id}  // <--- CRITICAL FIX: Pass the ID here!
             image={prop.image}
             location={prop.location}
             unitType={prop.unitType}

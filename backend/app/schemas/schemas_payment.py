@@ -1,7 +1,7 @@
 from pydantic import BaseModel, validator
 from datetime import datetime
 from typing import Optional
-from app.models.all_models import PaymentStatus  # Import PaymentStatus here
+from app.models.all_models import PaymentStatus
 
 class PaymentCreate(BaseModel):
     booking_id: int
@@ -9,7 +9,8 @@ class PaymentCreate(BaseModel):
     
     @validator('payment_method')
     def validate_payment_method(cls, v):
-        allowed = ['card', 'gcash', 'bank_transfer']
+        # Updated to include 'bpi' and 'cash'
+        allowed = ['card', 'gcash', 'bank_transfer', 'bpi', 'cash']
         if v not in allowed:
             raise ValueError(f'Payment method must be one of {allowed}')
         return v

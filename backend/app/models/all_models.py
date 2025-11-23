@@ -2,7 +2,7 @@ from sqlalchemy import JSON, Column, Integer, String, Float, DateTime, Boolean, 
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
-from app.db.session import Base # Changed from 'database import Base'
+from app.db.session import Base
 from sqlalchemy import Text
 
 class UserRole(str, enum.Enum):
@@ -26,10 +26,17 @@ class User(Base):
     bookings = relationship("Booking", back_populates="user")
     feedbacks = relationship("Feedback", back_populates="user")
 
+# --- NEW: Property Status Enum ---
+class PropertyStatus(str, enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
 class Property(Base):
     __tablename__ = "properties"
     
     id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     name = Column(String, nullable=False)
     description = Column(String)
     address = Column(String)
@@ -38,10 +45,16 @@ class Property(Base):
     bathrooms = Column(Integer)
     size_sqm = Column(Float)
     is_available = Column(Boolean, default=True)
-    image_url = Column(String)
+    
+    # --- NEW: Status & Multiple Images ---
+    status = Column(Enum(PropertyStatus), default=PropertyStatus.PENDING)
+    images = Column(JSON, default=[]) # Stores list of image URLs
+    image_url = Column(String) # Primary thumbnail
+    
     created_at = Column(DateTime, default=datetime.utcnow)
     
     bookings = relationship("Booking", back_populates="property")
+    owner = relationship("User")
 
 class BookingStatus(str, enum.Enum):
     PENDING = "pending"
@@ -77,17 +90,16 @@ class Payment(Base):
     id = Column(Integer, primary_key=True, index=True)
     booking_id = Column(Integer, ForeignKey("bookings.id"))
     amount = Column(Float, nullable=False)
-    payment_method = Column(String)  # 'card', 'gcash', 'bank_transfer'
+    payment_method = Column(String)
     transaction_id = Column(String, unique=True)
-    payment_intent_id = Column(String, unique=True)  # Stripe payment intent
+    payment_intent_id = Column(String, unique=True)
     status = Column(Enum(PaymentStatus), default=PaymentStatus.PENDING)
     paid_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    # Additional payment details
     receipt_url = Column(String)
     receipt_number = Column(String)
-    payment_metadata = Column(Text)  # JSON string for additional data
+    payment_metadata = Column(Text)
     
     booking = relationship("Booking", back_populates="payments")
 
@@ -97,7 +109,7 @@ class Feedback(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     property_id = Column(Integer, ForeignKey("properties.id"))
-    rating = Column(Integer)  # 1-5
+    rating = Column(Integer)
     comment = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
     
@@ -118,12 +130,12 @@ class AuditLog(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     action = Column(Enum(AuditAction), nullable=False)
-    entity_type = Column(String)  # 'property', 'booking', 'payment', etc.
+    entity_type = Column(String)
     entity_id = Column(Integer)
     description = Column(String)
     ip_address = Column(String)
     user_agent = Column(String)
-    log_metadata = Column("metadata", JSON)   # JSON string for additional data
+    log_metadata = Column("metadata", JSON)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     
     user = relationship("User")

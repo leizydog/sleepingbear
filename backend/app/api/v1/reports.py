@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, extract, and_
+from sqlalchemy import func, extract
 from datetime import datetime, timedelta
 from typing import Optional
 from app.models import all_models as models
@@ -8,6 +8,7 @@ from app.schemas import schemas_reports
 from app.core import security as auth
 from app.db.session import get_db
 
+# This line was missing, causing the error:
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
 @router.get("/dashboard", response_model=schemas_reports.DashboardStats)
@@ -85,12 +86,6 @@ def get_revenue_report(
         start_date = end_date - timedelta(days=30)
     
     # Query payments in period
-    payments_query = db.query(models.Payment).filter(
-        models.Payment.status == models.PaymentStatus.COMPLETED,
-        models.Payment.paid_at >= start_date,
-        models.Payment.paid_at <= end_date
-    )
-    
     total_revenue = db.query(
         func.sum(models.Payment.amount)
     ).filter(
@@ -247,13 +242,6 @@ def get_property_performance(
             models.Payment.status == models.PaymentStatus.COMPLETED
         ).scalar() or 0.0
         
-        # Average rating (if feedback exists)
-        avg_rating = db.query(
-            func.avg(models.Feedback.rating)
-        ).filter(
-            models.Feedback.property_id == property.id
-        ).scalar()
-        
         # Occupancy rate (last 90 days)
         ninety_days_ago = datetime.utcnow() - timedelta(days=90)
         booked_days = 0
@@ -277,7 +265,7 @@ def get_property_performance(
             "property_name": property.name,
             "total_bookings": total_bookings,
             "total_revenue": total_revenue,
-            "average_rating": float(avg_rating) if avg_rating else None,
+            # Feedback references removed here
             "occupancy_rate": round(occupancy_rate, 2),
         })
     

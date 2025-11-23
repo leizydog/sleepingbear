@@ -1,69 +1,87 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Lock, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // Fixes 'useNavigate' error
+import { useAuth } from '../../context/AuthContext';
+import { Loader2 } from 'lucide-react';
 
 const AdminLoginPage = () => {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const { login } = useAuth();
   
-  const handleAdminLogin = (e) => {
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError('');
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
-    console.log("Attempting Admin Login...");
-    // Simulate Admin login success and redirect to Admin Dashboard
-    navigate('/admin/dashboard'); 
+    setIsLoading(true);
+    setError('');
+
+    const result = await login({
+      email: formData.email,
+      password: formData.password
+    });
+
+    setIsLoading(false);
+
+    if (result.success) {
+      // Strict check: Only allow actual admins to use this portal
+      if (result.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        setError('Access Denied: You do not have administrator privileges.');
+        // Optional: Logout immediately if you want to prevent tenants from "accidentally" logging in here
+      }
+    } else {
+      setError(result.message || 'Invalid admin credentials');
+    }
   };
 
   return (
-    <div className="w-full max-w-[480px] bg-white/95 backdrop-blur-xl rounded-[40px] px-10 py-14 shadow-2xl animate-fade-in border border-white/50">
-      
+    <div className="w-full max-w-[480px] bg-white/95 backdrop-blur-xl rounded-[40px] px-10 py-14 shadow-2xl border border-white/50">
       <div className="text-center mb-10">
-        <h2 className="text-4xl font-extrabold text-gray-900 mb-2 tracking-tight">Admin Login</h2>
-        <p className="text-gray-500 font-medium">Use your administrator credentials</p>
+        <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Admin Portal</h2>
+        <p className="text-gray-500 font-medium">System Administrator Access Only</p>
       </div>
 
-      <form onSubmit={handleAdminLogin} className="space-y-6">
-        
-        {/* USERNAME Field */}
+      {error && (
+        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-semibold text-center">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleLogin} className="space-y-6">
         <div className="group">
-          <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">USERNAME</label>
+          <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2">Email Address</label>
           <input 
-            type="text" 
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full border-b-2 border-gray-200 bg-transparent py-3 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors placeholder-gray-300" 
-            placeholder="Enter username"
-            required
+            type="email" name="email" value={formData.email} onChange={handleChange} required
+            className="w-full border-b-2 border-gray-200 bg-transparent py-3 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors" 
+            placeholder="admin@sleepingbear.com" 
           />
         </div>
 
-        {/* PASSWORD Field */}
-        <div className="group relative">
-          <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">PASSWORD</label>
+        <div className="group">
+          <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2">Password</label>
           <input 
-            type="password" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border-b-2 border-gray-200 bg-transparent py-3 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors placeholder-gray-300" 
-            placeholder="••••••••"
-            required
+            type="password" name="password" value={formData.password} onChange={handleChange} required
+            className="w-full border-b-2 border-gray-200 bg-transparent py-3 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors" 
+            placeholder="••••••••" 
           />
         </div>
 
-        {/* Login Button */}
-        <div className="pt-8">
-          <button type="submit" className="w-full bg-[#4b0082] text-white font-bold py-4 rounded-2xl shadow-xl hover:bg-brand-purple transition-all transform hover:-translate-y-1">
-            Login
+        <div className="pt-6">
+          <button 
+            type="submit" 
+            disabled={isLoading}
+            className="w-full bg-gray-900 text-white font-bold py-4 rounded-2xl shadow-xl hover:bg-black transition-all flex justify-center items-center gap-2"
+          >
+            {isLoading ? <Loader2 className="animate-spin" /> : 'Login to Dashboard'}
           </button>
         </div>
-
-        {/* Placeholder for recovery/help */}
-        <div className="text-center mt-4">
-          <p className="text-gray-500 text-sm">
-            <a href="#" className="hover:underline">Contact support for access.</a>
-          </p>
-        </div>
-
       </form>
     </div>
   );

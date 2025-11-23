@@ -1,29 +1,67 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+
+// --- COMPONENTS ---
 import Header from '../components/organisms/Header';
 import HomeSearchSection from '../components/organisms/HomeSearchSection';
 import FeaturedListings from '../components/organisms/FeaturedListings';
-import { useAuth } from '../context/AuthContext';
 
-const allProperties = [
-    { id: 'PR-201', image: 'https://images.unsplash.com/photo-1567767292278-a4f21aa2d36e', location: '123 Pasig St., Pasig City', unitType: '2-Bedroom Condo', price: '₱25,000/month' },
-    { id: 'PR-202', image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267', location: '456 BGC, Taguig City', unitType: 'Studio Unit', price: '₱20,000/month' },
-    { id: 'PRT001', image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688', location: 'BGC, Taguig', unitType: 'Studio (SMDC Grass)', price: '₱18,000/month' },
-    { id: 'PRT002', image: 'https://images.unsplash.com/photo-1512918760383-eda2723ad13e', location: 'The Rise, Makati City', unitType: '1-Bedroom Condo', price: '₱12,000/month' },
-    { id: 'PRT004', image: 'https://images.unsplash.com/photo-1600596542815-2495db9dc2c3', location: 'Antipolo', unitType: '2-Bedroom', price: '₱10,000/month' },
-];
+// --- CONTEXT & SERVICES ---
+import { useAuth } from '../context/AuthContext';
+import { propertyAPI } from '../services/api'; 
+
+// --- ASSETS ---
+import bgImage from '../assets/B.jpg'; 
 
 const LandingPage = () => {
-    const [filteredResults, setFilteredResults] = useState(allProperties);
+    // ==============================
+    // 1. STATE MANAGEMENT
+    // ==============================
+    const [properties, setProperties] = useState([]);
+    const [filteredResults, setFilteredResults] = useState([]);
     const [searchPerformed, setSearchPerformed] = useState(false);
+    const [loading, setLoading] = useState(true);
     const { user } = useAuth();
 
+    // ==============================
+    // 2. EFFECTS (DATA FETCHING)
+    // ==============================
+    useEffect(() => {
+        const fetchProperties = async () => {
+            try {
+                setLoading(true);
+                const response = await propertyAPI.getAll();
+                
+                const formattedProps = response.data.properties.map(p => ({
+                    id: p.id,
+                    image: p.image_url || 'https://via.placeholder.com/400',
+                    location: p.address,
+                    unitType: p.name, 
+                    price: `₱${p.price_per_month.toLocaleString()}/month`
+                }));
+
+                setProperties(formattedProps);
+                setFilteredResults(formattedProps);
+            } catch (error) {
+                console.error("Failed to load properties:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchProperties();
+    }, []);
+
+    // ==============================
+    // 3. HANDLERS
+    // ==============================
     const handleSearch = (filters) => {
-        // Implement the search filtering logic
-        const results = allProperties.filter(prop => {
-            const matchLoc = filters.location ? prop.location.toLowerCase().includes(filters.location.toLowerCase()) : true;
-            const matchType = filters.unitType ? prop.unitType.toLowerCase().includes(filters.unitType.toLowerCase()) : true;
-            
-            // Note: Price range filtering logic would be more complex but is skipped for this basic functional filter.
+        const results = properties.filter(prop => {
+            const matchLoc = filters.location 
+                ? prop.location.toLowerCase().includes(filters.location.toLowerCase()) 
+                : true;
+            const matchType = filters.unitType 
+                ? prop.unitType.toLowerCase().includes(filters.unitType.toLowerCase()) 
+                : true;
             return matchLoc && matchType;
         });
 
@@ -31,43 +69,73 @@ const LandingPage = () => {
         setSearchPerformed(true);
     };
 
-    return (
-        <div className="min-h-screen bg-white font-sans text-gray-900">
-            {/* Header shows Login button */}
-            <Header isLoggedIn={!!user} />
+    // ==============================
+    // 4. RENDER HELPERS
+    // ==============================
+    
+    const renderBackground = () => (
+        <div className="fixed inset-0 z-0 pointer-events-none">
+            <img 
+                src={bgImage} 
+                alt="Background" 
+                className="w-full h-full object-cover opacity-90" 
+            />
+            <div className="absolute inset-0 bg-white/40"></div>
+        </div>
+    );
 
-            <main className="max-w-7xl mx-auto px-6 lg:px-8 pt-12 pb-20">
-                <div className="mb-12 animate-slide-up text-center md:text-left">
-                    <h1 className="text-5xl font-extrabold font-serif text-gray-900 mb-4">
-                        Find Your <span className="text-[#a86add]">Perfect Home</span>
-                    </h1>
-                    <p className="text-xl text-gray-500 max-w-2xl">
-                        Search here to view available listings instantly.
-                    </p>
-                </div>
+    const renderResultsSection = () => {
+        if (!searchPerformed && loading) return null;
+
+        return (
+            <div className="bg-white/80 backdrop-blur-md p-8 rounded-3xl mt-10 shadow-lg animate-fade-in">
+                <h2 className="text-3xl font-extrabold font-serif text-gray-900 mb-4">
+                    {searchPerformed ? 'Search Results' : 'Featured Listings'}
+                </h2>
                 
-                {/* Search Bar */}
-                <HomeSearchSection onSearch={handleSearch} />
-
-                {/* Conditional Results Section */}
-                {searchPerformed && (
-                    <>
-                        <hr className="border-gray-100 my-10" />
-                        <h2 className="text-3xl font-extrabold font-serif text-gray-900 mb-4">
-                           Search Results
-                        </h2>
-                        <p className="text-gray-600 mb-8">{filteredResults.length} properties found matching your criteria.</p>
-
-                        <FeaturedListings properties={filteredResults} />
-                        
-                        {filteredResults.length === 0 && (
-                            <div className="text-center text-gray-500 py-10 border border-dashed border-gray-300 rounded-xl">
-                                No properties matched your search.
-                            </div>
-                        )}
-                    </>
+                {loading ? (
+                    <div className="text-center py-10">
+                        <p className="text-gray-600 font-bold animate-pulse">Loading properties...</p>
+                    </div>
+                ) : filteredResults.length > 0 ? (
+                    <FeaturedListings properties={filteredResults} />
+                ) : (
+                    <div className="text-center text-gray-500 py-10 border border-dashed border-gray-300 rounded-xl">
+                        No properties found matching your criteria.
+                    </div>
                 )}
-            </main>
+            </div>
+        );
+    };
+
+    // ==============================
+    // 5. MAIN RENDER
+    // ==============================
+    return (
+        <div className="min-h-screen font-sans text-gray-900 relative overflow-hidden">
+            {renderBackground()}
+
+            <div className="relative z-10">
+                <Header isLoggedIn={!!user} />
+
+                {/* INCREASED TOP PADDING (pt-28) TO ACCOUNT FOR FIXED HEADER */}
+                <main className="max-w-7xl mx-auto px-6 lg:px-8 pt-28 pb-20">
+                    
+                    <div className="mb-12 animate-slide-up text-center md:text-left bg-white/60 backdrop-blur-sm p-8 rounded-3xl inline-block shadow-sm border border-white/50">
+                        <h1 className="text-5xl font-extrabold font-serif text-gray-900 mb-4 leading-tight">
+                            Find Your <span className="text-[#a86add]">Perfect Home</span>
+                        </h1>
+                        <p className="text-xl text-gray-800 font-semibold max-w-2xl">
+                            Search here to view available listings instantly.
+                        </p>
+                    </div>
+                    
+                    <HomeSearchSection onSearch={handleSearch} />
+
+                    {renderResultsSection()}
+
+                </main>
+            </div>
         </div>
     );
 };

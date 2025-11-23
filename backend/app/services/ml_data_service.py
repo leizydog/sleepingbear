@@ -1,27 +1,19 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from app.models import all_models as models
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import List, Dict
 
 class MLDataService:
     
     @staticmethod
     def collect_retention_features(db: Session) -> pd.DataFrame:
-        """
-        Collect features for retention prediction model
-        """
-        
-        # Get all users with their booking history
         users = db.query(models.User).filter(
             models.User.role == models.UserRole.TENANT
         ).all()
         
         data = []
-        
         for user in users:
-            # Get user's bookings
             bookings = db.query(models.Booking).filter(
                 models.Booking.user_id == user.id
             ).all()
@@ -29,7 +21,6 @@ class MLDataService:
             if not bookings:
                 continue
             
-            # Calculate features
             features = MLDataService._calculate_user_features(db, user, bookings)
             data.append(features)
         
@@ -42,10 +33,6 @@ class MLDataService:
         user: models.User,
         bookings: List[models.Booking]
     ) -> Dict:
-        """
-        Calculate retention features for a user
-        """
-        
         now = datetime.utcnow()
         
         # Basic user features
@@ -72,7 +59,6 @@ class MLDataService:
         for payment in payments:
             if payment.status == models.PaymentStatus.COMPLETED and payment.paid_at:
                 booking = payment.booking
-                # Consider payment late if paid after booking start date
                 if payment.paid_at > booking.start_date:
                     late_payments += 1
                 else:
@@ -98,19 +84,11 @@ class MLDataService:
             (b.end_date - b.start_date).days for b in bookings
         ]) / len(bookings) if bookings else 0
         
-        # Feedback features
-        feedbacks = db.query(models.Feedback).filter(
-            models.Feedback.user_id == user.id
-        ).all()
+        # REMOVED: Feedback features calculation
         
-        avg_rating = sum([f.rating for f in feedbacks]) / len(feedbacks) if feedbacks else 0.0
-        total_feedbacks = len(feedbacks)
-        
-        # Cancellation rate
         cancellation_rate = (cancelled_bookings / total_bookings) if total_bookings > 0 else 0.0
         
-        # Target variable: Will return (stayed for another booking)
-        # Consider "retained" if user has booked in last 90 days
+        # Target variable
         retained = 1 if days_since_last_booking <= 90 else 0
         
         return {
@@ -129,16 +107,12 @@ class MLDataService:
             'avg_booking_interval': avg_booking_interval,
             'days_since_last_booking': days_since_last_booking,
             'avg_booking_length': avg_booking_length,
-            'avg_rating': avg_rating,
-            'total_feedbacks': total_feedbacks,
-            'retained': retained  # Target variable
+            # REMOVED: avg_rating, total_feedbacks
+            'retained': retained
         }
     
     @staticmethod
     def export_training_data(db: Session, filepath: str = 'training_data.csv'):
-        """
-        Export training data to CSV for ML model
-        """
         df = MLDataService.collect_retention_features(db)
         df.to_csv(filepath, index=False)
         return {
@@ -150,20 +124,14 @@ class MLDataService:
     
     @staticmethod
     def generate_synthetic_data(db: Session, num_records: int = 500):
-        """
-        Generate synthetic data for ML training (if real data is insufficient)
-        """
         import random
-        import numpy as np
         
         data = []
         
         for i in range(num_records):
-            # Generate random but realistic features
-            account_age_days = random.randint(30, 1095)  # 1 month to 3 years
+            account_age_days = random.randint(30, 1095)
             total_bookings = random.randint(1, 20)
             
-            # Correlated features
             cancellation_rate = random.uniform(0, 0.5) if total_bookings > 3 else random.uniform(0, 0.8)
             cancelled_bookings = int(total_bookings * cancellation_rate)
             confirmed_bookings = total_bookings - cancelled_bookings
@@ -181,19 +149,13 @@ class MLDataService:
             days_since_last_booking = random.randint(0, 365)
             avg_booking_length = random.randint(7, 90)
             
-            avg_rating = random.uniform(2.5, 5.0)
-            total_feedbacks = random.randint(0, total_bookings)
+            # REMOVED: Synthetic feedback data generation
             
-            # Target: Higher likelihood of retention if:
-            # - Low cancellation rate
-            # - Low late payment rate
-            # - Recent activity
-            # - High rating
+            # Retention score calculation updated (removed rating factor)
             retention_score = (
-                (1 - cancellation_rate) * 0.3 +
-                (1 - late_payment_rate) * 0.2 +
-                (1 - min(days_since_last_booking / 365, 1)) * 0.3 +
-                (avg_rating / 5) * 0.2
+                (1 - cancellation_rate) * 0.4 + # Increased weight
+                (1 - late_payment_rate) * 0.3 + # Increased weight
+                (1 - min(days_since_last_booking / 365, 1)) * 0.3
             )
             
             retained = 1 if retention_score > 0.6 and random.random() > 0.2 else 0
@@ -214,8 +176,7 @@ class MLDataService:
                 'avg_booking_interval': avg_booking_interval,
                 'days_since_last_booking': days_since_last_booking,
                 'avg_booking_length': avg_booking_length,
-                'avg_rating': round(avg_rating, 2),
-                'total_feedbacks': random.randint(0, total_bookings),
+                # REMOVED: avg_rating, total_feedbacks from export
                 'retained': retained
             })
         
