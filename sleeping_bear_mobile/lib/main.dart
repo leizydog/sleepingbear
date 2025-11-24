@@ -20,6 +20,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PropertyProvider()),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Sleeping Bear Rental',
         theme: ThemeData(
           primarySwatch: Colors.blue,

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:sleeping_bear_mobile/services/api_service.dart';
 import '../../models/booking.dart';
 import '../../models/payment.dart';
+import '../../models/payment_method.dart'; // <--- ADDED THIS IMPORT
 
 class PaymentScreen extends StatefulWidget {
   final Booking booking;
@@ -102,7 +103,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 const Text('Your payment has been processed successfully.'),
                 const SizedBox(height: 16),
                 Text(
-                  'Receipt Number: ${confirmData['payment_id']}',
+                  'Receipt Number: ${confirmData['receipt_number'] ?? "Pending"}',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
