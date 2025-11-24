@@ -42,7 +42,8 @@ async def upload_property_images(files: List[UploadFile] = File(...)):
 def create_property(
     property_data: schemas_property.PropertyCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.require_role([models.UserRole.ADMIN, models.UserRole.OWNER]))
+    # 👇 Add TENANT to the list
+    current_user: models.User = Depends(auth.require_role([models.UserRole.ADMIN, models.UserRole.OWNER, models.UserRole.TENANT]))
 ):
     """Create a new property"""
     initial_status = models.PropertyStatus.APPROVED if current_user.role == models.UserRole.ADMIN else models.PropertyStatus.PENDING
@@ -70,8 +71,6 @@ def create_property(
 
 @router.get("/", response_model=schemas_property.PropertyListResponse)
 def get_properties(
-    db: Session = Depends(get_db)
-):
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100),
     search: Optional[str] = None,
@@ -81,7 +80,7 @@ def get_properties(
     available_only: bool = False,
     status_filter: Optional[str] = None,
     db: Session = Depends(get_db)
-
+):
     query = db.query(models.Property)
     
     if available_only:
@@ -94,6 +93,14 @@ def get_properties(
             (models.Property.name.ilike(search_term)) |
             (models.Property.address.ilike(search_term))
         )
+    
+    # Apply filters for price and bedrooms if provided
+    if min_price is not None:
+        query = query.filter(models.Property.price_per_month >= min_price)
+    if max_price is not None:
+        query = query.filter(models.Property.price_per_month <= max_price)
+    if bedrooms is not None:
+        query = query.filter(models.Property.bedrooms >= bedrooms)
     
     total = query.count()
     offset = (page - 1) * per_page
