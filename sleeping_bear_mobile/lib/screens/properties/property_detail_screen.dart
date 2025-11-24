@@ -9,9 +9,10 @@ import '../bookings/booking_create_screen.dart';
 
 class PropertyDetailScreen extends StatefulWidget {
   final Property property;
-
-  const PropertyDetailScreen({Key? key, required this.property})
-      : super(key: key);
+  
+  final dynamic propertyId;
+  
+const PropertyDetailScreen({super.key, required this.propertyId, required this.property});
 
   @override
   State<PropertyDetailScreen> createState() => _PropertyDetailScreenState();
@@ -365,7 +366,9 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       }
-    } catch (e) {}
+   } catch (e) {
+  // Intentionally ignoring error
+}
 
     return {};
   }

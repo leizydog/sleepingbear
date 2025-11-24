@@ -73,26 +73,3 @@ class Payment {
     }
   }
 }
-
-class PaymentMethod {
-  final String id;
-  final String name;
-  final String icon;
-  final String description;
-  
-  PaymentMethod({
-    required this.id,
-    required this.name,
-    required this.icon,
-    required this.description,
-  });
-  
-  factory PaymentMethod.fromJson(Map<String, dynamic> json) {
-    return PaymentMethod(
-      id: json['id'],
-      name: json['name'],
-      icon: json['icon'],
-      description: json['description'],
-    );
-  }
-}
