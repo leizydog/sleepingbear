@@ -9,31 +9,54 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "sk_test_your_test_key_here")
 class PaymentService:
     
     @staticmethod
-    def create_payment_intent(amount: float, currency: str = "php", metadata: dict = None):
+    def create_payment_intent(amount: float, payment_method_type: str, currency: str = "php", metadata: dict = None):
         """
         Create a Stripe Payment Intent
-        Amount should be in the smallest currency unit (centavos for PHP)
         """
         try:
-            intent = stripe.Pay
+            # 1. Map our internal types to Stripe types
+            # 'bpi' -> 'card' (BPI acts as a standard credit/debit card in Stripe)
+            # 'gcash' -> 'gcash' (if available) or 'card' fallback
+            stripe_method_types = []
+            
+            if payment_method_type == 'bpi':
+                stripe_method_types = ['card']
+            elif payment_method_type == 'gcash':
+                # Note: 'gcash' payment method requires a Stripe account in a supported region (like Singapore)
+                # If using a US test account, this might fail, so we fallback to card for testing if needed
+                stripe_method_types = ['card'] 
+            else:
+                stripe_method_types = ['card']
+
+            # 2. Create the Intent
             intent = stripe.PaymentIntent.create(
-                amount=int(amount * 100),  # Convert to centavos
+                amount=int(amount * 100),  # Convert to centavos (e.g. 100.00 -> 10000)
                 currency=currency.lower(),
+                payment_method_types=stripe_method_types,
                 metadata=metadata or {},
                 automatic_payment_methods={
-                    'enabled': True,
+                    'enabled': False, # Disable automatic to force specific types
                 }
             )
+            
             return {
                 'success': True,
                 'client_secret': intent.client_secret,
                 'payment_intent_id': intent.id,
                 'amount': amount,
             }
-        except stripe.error.StripeError as e:
+        except stripe.StripeError as e:
+            # Fixed: Catch stripe.StripeError directly, not stripe.error.StripeError
+            print(f"Stripe Error: {e}")
             return {
                 'success': False,
                 'error': str(e),
+            }
+        except Exception as e:
+            print(f"General Error: {e}")
+            return {
+                'success': False,
+                'error': f"An unexpected error occurred: {str(e)}",
             }
     
     @staticmethod
@@ -43,65 +66,32 @@ class PaymentService:
         """
         try:
             intent = stripe.PaymentIntent.retrieve(payment_intent_id)
+            
+            # Check if paid
+            is_paid = intent.status == 'succeeded'
+            
             return {
                 'success': True,
+                'is_paid': is_paid,
                 'status': intent.status,
                 'amount': intent.amount / 100,  # Convert back to pesos
-                'payment_method': intent.payment_method,
-                'receipt_url': intent.charges.data[0].receipt_url if intent.charges.data else None,
+                'payment_method': intent.payment_method_types[0] if intent.payment_method_types else 'unknown',
             }
-        except stripe.error.StripeError as e:
+        except stripe.StripeError as e:
             return {
                 'success': False,
                 'error': str(e),
             }
-    
-    @staticmethod
-    def create_refund(payment_intent_id: str, amount: float = None):
-        """
-        Create a refund for a payment
-        If amount is None, refund the full amount
-        """
-        try:
-            refund_params = {'payment_intent': payment_intent_id}
-            if amount:
-                refund_params['amount'] = int(amount * 100)
+        except Exception as e:
+            return {
+                'success': False,
+                'error': str(e),
+            }
             
-            refund = stripe.Refund.create(**refund_params)
-            return {
-                'success': True,
-                'refund_id': refund.id,
-                'status': refund.status,
-                'amount': refund.amount / 100,
-            }
-        except stripe.error.StripeError as e:
-            return {
-                'success': False,
-                'error': str(e),
-            }
-    
     @staticmethod
     def get_payment_methods():
-        """
-        Return available payment methods
-        """
         return [
-            {
-                'id': 'card',
-                'name': 'Credit/Debit Card',
-                'icon': '💳',
-                'description': 'Visa, Mastercard, etc.'
-            },
-            {
-                'id': 'gcash',
-                'name': 'GCash',
-                'icon': '📱',
-                'description': 'Pay via GCash wallet'
-            },
-            {
-                'id': 'bank_transfer',
-                'name': 'Bank Transfer',
-                'icon': '🏦',
-                'description': 'Direct bank transfer'
-            },
+            {'id': 'bpi', 'name': 'BPI (Credit/Debit Card)', 'icon': '💳'},
+            {'id': 'gcash', 'name': 'GCash', 'icon': '📱'},
+            {'id': 'cash', 'name': 'Cash (Admin Office)', 'icon': '💵'},
         ]

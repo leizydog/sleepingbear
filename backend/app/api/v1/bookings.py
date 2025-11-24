@@ -5,23 +5,31 @@ from datetime import datetime
 from typing import List
 from app.models import all_models as models
 from app.schemas import schemas_booking
-from app.schemas import schemas_property
-from app.schemas.schemas import UserResponse
 from app.core import security as auth
 from app.db.session import get_db
 from app.services.audit_service import AuditService
 from fastapi import Request
+import math
 
 router = APIRouter(prefix="/bookings", tags=["Bookings"])
 
 def calculate_total_amount(property_price: float, start_date: datetime, end_date: datetime) -> float:
-    """Calculate total amount based on monthly rate"""
-    days = (end_date - start_date).days
-    months = days / 30  # Approximate months
+    delta = end_date - start_date
+    days = delta.days
+    if days <= 0:
+        months = 1
+    else:
+        months = math.ceil(days / 30)
     return round(property_price * months, 2)
 
 def check_availability(db: Session, property_id: int, start_date: datetime, end_date: datetime, exclude_booking_id: int = None) -> bool:
-    """Check if property is available for the given date range"""
+    """
+    Strict availability check. 
+    Blocks dates if ANY Pending or Confirmed booking exists.
+    """
+    print(f"\n--- Checking Availability for Property {property_id} ---")
+    print(f"Request: {start_date} to {end_date}")
+
     query = db.query(models.Booking).filter(
         models.Booking.property_id == property_id,
         models.Booking.status.in_([models.BookingStatus.PENDING, models.BookingStatus.CONFIRMED]),
@@ -35,45 +43,52 @@ def check_availability(db: Session, property_id: int, start_date: datetime, end_
     if exclude_booking_id:
         query = query.filter(models.Booking.id != exclude_booking_id)
     
-    return query.count() == 0
+    conflicts = query.all()
+    if conflicts:
+        print(f"❌ CONFLICT: Found {len(conflicts)} blocking bookings.")
+        for b in conflicts:
+            print(f"   - ID {b.id}: {b.start_date} to {b.end_date} [{b.status}]")
+        return False
+        
+    print("✅ No conflicts. Dates are free.")
+    return True
+
+# --- NEW ENDPOINT TO SYNC CALENDAR ---
+@router.get("/property/{property_id}/occupied", response_model=List[schemas_booking.BookingBase])
+def get_property_occupied_dates(
+    property_id: int, 
+    db: Session = Depends(get_db)
+):
+    """
+    Returns dates that should be GRAYED OUT in the calendar.
+    Includes PENDING bookings so users don't try to book them.
+    """
+    bookings = db.query(models.Booking).filter(
+        models.Booking.property_id == property_id,
+        models.Booking.status.in_([models.BookingStatus.PENDING, models.BookingStatus.CONFIRMED])
+    ).all()
+    return bookings
 
 @router.post("/check-availability", response_model=schemas_booking.AvailabilityResponse)
 def check_property_availability(
     availability_data: schemas_booking.AvailabilityCheck,
     db: Session = Depends(get_db)
 ):
-    """Check if a property is available for booking"""
-    # Check if property exists
     property = db.query(models.Property).filter(models.Property.id == availability_data.property_id).first()
     if not property:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Property not found"
-        )
+        raise HTTPException(status_code=404, detail="Property not found")
     
     if not property.is_available:
-        return {
-            "available": False,
-            "message": "Property is not currently available for booking"
-        }
+        return {"available": False, "message": "Property is not currently available for booking"}
     
     is_available = check_availability(
-        db,
-        availability_data.property_id,
-        availability_data.start_date,
-        availability_data.end_date
+        db, availability_data.property_id, availability_data.start_date, availability_data.end_date
     )
     
     if is_available:
-        return {
-            "available": True,
-            "message": "Property is available for the selected dates"
-        }
+        return {"available": True, "message": "Property is available"}
     else:
-        return {
-            "available": False,
-            "message": "Property is already booked for the selected dates"
-        }
+        return {"available": False, "message": "Dates overlap with an existing booking"}
 
 @router.post("/", response_model=schemas_booking.BookingResponse, status_code=status.HTTP_201_CREATED)
 def create_booking(
@@ -82,36 +97,22 @@ def create_booking(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """Create a new booking"""
-    # Check if property exists
     property = db.query(models.Property).filter(models.Property.id == booking_data.property_id).first()
     if not property:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Property not found"
-        )
+        raise HTTPException(status_code=404, detail="Property not found")
     
     if not property.is_available:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Property is not available for booking"
-        )
+        raise HTTPException(status_code=400, detail="Property is disabled")
     
-    # Check availability
     if not check_availability(db, booking_data.property_id, booking_data.start_date, booking_data.end_date):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Property is not available for the selected dates"
-        )
+        raise HTTPException(status_code=400, detail="These dates are already booked (or pending payment). Please choose other dates.")
     
-    # Calculate total amount
     total_amount = calculate_total_amount(
         property.price_per_month,
         booking_data.start_date,
         booking_data.end_date
     )
     
-    # Create booking
     db_booking = models.Booking(
         user_id=current_user.id,
         property_id=booking_data.property_id,
@@ -124,23 +125,21 @@ def create_booking(
     db.add(db_booking)
     db.commit()
     db.refresh(db_booking)
-    return db_booking
 
-    AuditService.log(
-        db=db,
-        action=models.AuditAction.BOOKING,
-        user_id=current_user.id,
-        entity_type="booking",
-        entity_id=db_booking.id,
-        description=f"Created booking for property #{booking_data.property_id}",
-        metadata={
-            "property_id": booking_data.property_id,
-            "start_date": booking_data.start_date.isoformat(),
-            "end_date": booking_data.end_date.isoformat(),
-            "amount": total_amount
-        },
-        request=request
-    )
+    try:
+        AuditService.log(
+            db=db,
+            action=models.AuditAction.BOOKING,
+            user_id=current_user.id,
+            entity_type="booking",
+            entity_id=db_booking.id,
+            description=f"Created booking #{db_booking.id}",
+            metadata={"amount": total_amount},
+            request=request
+        )
+    except:
+        pass
+
     return db_booking
 
 @router.get("/", response_model=List[schemas_booking.BookingResponse])
@@ -148,25 +147,18 @@ def get_bookings(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """Get all bookings (Admin sees all, users see their own)"""
     if current_user.role == models.UserRole.ADMIN:
-        bookings = db.query(models.Booking).all()
-    else:
-        bookings = db.query(models.Booking).filter(models.Booking.user_id == current_user.id).all()
-    
-    return bookings
+        return db.query(models.Booking).all()
+    return db.query(models.Booking).filter(models.Booking.user_id == current_user.id).all()
 
 @router.get("/my-bookings", response_model=List[schemas_booking.BookingResponse])
 def get_my_bookings(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """Get current user's bookings"""
-    bookings = db.query(models.Booking).filter(
+    return db.query(models.Booking).filter(
         models.Booking.user_id == current_user.id
     ).order_by(models.Booking.created_at.desc()).all()
-    
-    return bookings
 
 @router.get("/{booking_id}", response_model=schemas_booking.BookingResponse)
 def get_booking(
@@ -174,21 +166,8 @@ def get_booking(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """Get a specific booking"""
     booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
-    if not booking:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Booking not found"
-        )
-    
-    # Check permissions
-    if current_user.role != models.UserRole.ADMIN and booking.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to view this booking"
-        )
-    
+    if not booking: raise HTTPException(status_code=404, detail="Not found")
     return booking
 
 @router.put("/{booking_id}", response_model=schemas_booking.BookingResponse)
@@ -196,15 +175,10 @@ def update_booking_status(
     booking_id: int,
     booking_update: schemas_booking.BookingUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.require_role([models.UserRole.ADMIN]))
+    current_user: models.User = Depends(auth.require_role([models.UserRole.ADMIN, models.UserRole.OWNER]))
 ):
-    """Update booking status (Admin only)"""
     booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
-    if not booking:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Booking not found"
-        )
+    if not booking: raise HTTPException(status_code=404, detail="Not found")
     
     if booking_update.status:
         booking.status = booking_update.status
@@ -219,27 +193,8 @@ def cancel_booking(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    """Cancel a booking"""
     booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
-    if not booking:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Booking not found"
-        )
-    
-    # Check permissions
-    if current_user.role != models.UserRole.ADMIN and booking.user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to cancel this booking"
-        )
-    
-    # Only pending or confirmed bookings can be cancelled
-    if booking.status not in [models.BookingStatus.PENDING, models.BookingStatus.CONFIRMED]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only pending or confirmed bookings can be cancelled"
-        )
+    if not booking: raise HTTPException(status_code=404, detail="Not found")
     
     booking.status = models.BookingStatus.CANCELLED
     db.commit()

@@ -10,6 +10,27 @@ class UserRole(str, enum.Enum):
     TENANT = "tenant"
     OWNER = "owner"
 
+# --- UPDATED: Added REJECTED and DECLINED ---
+class BookingStatus(str, enum.Enum):
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    CANCELLED = "cancelled"
+    COMPLETED = "completed"
+    REJECTED = "rejected" 
+    DECLINED = "declined"
+
+class PaymentStatus(str, enum.Enum):
+    PENDING = "pending"
+    COMPLETED = "completed"
+    FAILED = "failed"
+    REFUNDED = "refunded"
+
+class PropertyStatus(str, enum.Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
+# --- USERS TABLE ---
 class User(Base):
     __tablename__ = "users"
     
@@ -26,12 +47,7 @@ class User(Base):
     bookings = relationship("Booking", back_populates="user")
     feedbacks = relationship("Feedback", back_populates="user")
 
-# --- NEW: Property Status Enum ---
-class PropertyStatus(str, enum.Enum):
-    PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
-
+# --- PROPERTIES TABLE ---
 class Property(Base):
     __tablename__ = "properties"
     
@@ -45,23 +61,15 @@ class Property(Base):
     bathrooms = Column(Integer)
     size_sqm = Column(Float)
     is_available = Column(Boolean, default=True)
-    
-    # --- NEW: Status & Multiple Images ---
     status = Column(Enum(PropertyStatus), default=PropertyStatus.PENDING)
-    images = Column(JSON, default=[]) # Stores list of image URLs
-    image_url = Column(String) # Primary thumbnail
-    
+    images = Column(JSON, default=[]) 
+    image_url = Column(String) 
     created_at = Column(DateTime, default=datetime.utcnow)
     
     bookings = relationship("Booking", back_populates="property")
     owner = relationship("User")
 
-class BookingStatus(str, enum.Enum):
-    PENDING = "pending"
-    CONFIRMED = "confirmed"
-    CANCELLED = "cancelled"
-    COMPLETED = "completed"
-
+# --- BOOKINGS TABLE ---
 class Booking(Base):
     __tablename__ = "bookings"
     
@@ -78,12 +86,7 @@ class Booking(Base):
     property = relationship("Property", back_populates="bookings")
     payments = relationship("Payment", back_populates="booking")
 
-class PaymentStatus(str, enum.Enum):
-    PENDING = "pending"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    REFUNDED = "refunded"
-
+# --- PAYMENTS TABLE ---
 class Payment(Base):
     __tablename__ = "payments"
     
@@ -96,13 +99,13 @@ class Payment(Base):
     status = Column(Enum(PaymentStatus), default=PaymentStatus.PENDING)
     paid_at = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
     receipt_url = Column(String)
     receipt_number = Column(String)
     payment_metadata = Column(Text)
     
     booking = relationship("Booking", back_populates="payments")
 
+# --- FEEDBACKS TABLE ---
 class Feedback(Base):
     __tablename__ = "feedbacks"
     
@@ -115,6 +118,7 @@ class Feedback(Base):
     
     user = relationship("User", back_populates="feedbacks")
 
+# --- AUDIT LOGS TABLE ---
 class AuditAction(str, enum.Enum):
     CREATE = "create"
     UPDATE = "update"
