@@ -23,25 +23,27 @@ const StatsCards = ({ bookings = [] }) => {
       {cards.map((card, index) => (
         <div 
           key={index}
-          // Dynamic border color based on the card.color prop
-          className={`bg-white rounded-xl shadow-sm p-6 border-l-[6px] flex items-center justify-between
-            ${card.color === 'blue' ? 'border-blue-600' : ''}
-            ${card.color === 'green' ? 'border-green-500' : ''}
-            ${card.color === 'yellow' ? 'border-yellow-500' : ''}
-            ${card.color === 'indigo' ? 'border-indigo-600' : ''}
+          // ADDED: dark:bg-gray-900 and transition classes
+          className={`bg-white dark:bg-gray-900 rounded-xl shadow-sm p-6 border-l-[6px] flex items-center justify-between transition-colors duration-300
+            ${card.color === 'blue' ? 'border-blue-600 dark:border-blue-500' : ''}
+            ${card.color === 'green' ? 'border-green-500 dark:border-green-500' : ''}
+            ${card.color === 'yellow' ? 'border-yellow-500 dark:border-yellow-500' : ''}
+            ${card.color === 'indigo' ? 'border-indigo-600 dark:border-indigo-500' : ''}
           `}
         >
           <div>
-            <p className="text-sm text-gray-500 mb-1 font-medium">{card.label}</p>
-            <p className="text-4xl font-bold text-gray-900">{card.value}</p>
+            {/* ADDED: dark:text-gray-400 */}
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-1 font-medium">{card.label}</p>
+            {/* ADDED: dark:text-white */}
+            <p className="text-4xl font-bold text-gray-900 dark:text-white">{card.value}</p>
           </div>
           
-          {/* Circular Icon Background */}
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center
-            ${card.color === 'blue' ? 'bg-blue-100 text-blue-600' : ''}
-            ${card.color === 'green' ? 'bg-green-100 text-green-600' : ''}
-            ${card.color === 'yellow' ? 'bg-yellow-100 text-yellow-600' : ''}
-            ${card.color === 'indigo' ? 'bg-indigo-100 text-indigo-600' : ''}
+          {/* Circular Icon Background - ADDED dark mode variants */}
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors duration-300
+            ${card.color === 'blue' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : ''}
+            ${card.color === 'green' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : ''}
+            ${card.color === 'yellow' ? 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400' : ''}
+            ${card.color === 'indigo' ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400' : ''}
           `}>
             <Icon name={card.icon} size={24} />
           </div>

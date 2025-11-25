@@ -1,71 +1,54 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, MoreVertical, Loader2 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { bookingAPI } from '../../services/api';
+import { ChevronRight, MapPin } from 'lucide-react'; 
 
 const PropertyCard = ({ id, image, location, unitType, price }) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
 
-  const handleBookNow = async () => {
-    if (!user) {
-      alert("Please login to book this property.");
-      navigate('/login');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // 1. Create Booking in Backend
-      const startDate = new Date();
-      const endDate = new Date();
-      endDate.setFullYear(startDate.getFullYear() + 1); // Default 1 year lease
-
-      const bookingData = {
-        property_id: id,
-        start_date: startDate.toISOString(),
-        end_date: endDate.toISOString()
-      };
-
-      const response = await bookingAPI.create(bookingData);
-      
-      // 2. Redirect to Payment Page with new Booking ID
-      navigate('/payment', { state: { bookingId: response.data.id } });
-
-    } catch (error) {
-      console.error("Booking failed:", error);
-      alert("Failed to create booking. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+  const handleViewDetails = () => {
+    // Navigate to the new Details Page
+    navigate(`/property/${id}`);
   };
 
   return (
-    <div className="min-w-[320px] bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow border border-gray-100 relative group">
-      <button className="absolute top-6 right-6 z-10 text-white hover:text-gray-200 bg-black/20 rounded-full p-1">
-        <MoreVertical size={20} />
-      </button>
-
-      <div className="h-48 w-full rounded-xl overflow-hidden mb-4">
-        <img src={image} alt="Property" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+    <div className="min-w-[320px] bg-white rounded-[20px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 group flex flex-col h-full">
+      
+      {/* Image Section */}
+      <div className="relative h-56 overflow-hidden">
+        <img 
+          src={image} 
+          alt="Property" 
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+        />
+        {/* Gradient Overlay on Hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
       </div>
 
-      <div className="space-y-1 mb-6">
-        <p className="text-xs font-bold text-gray-900">Location: <span className="font-normal text-gray-600">{location}</span></p>
-        <p className="text-xs font-bold text-gray-900">Unit Type: <span className="font-normal text-gray-600">{unitType}</span></p>
-        <p className="text-xs font-bold text-gray-900">Price: <span className="font-normal text-gray-600">{price}</span></p>
-      </div>
+      {/* Details Section */}
+      <div className="p-5 flex flex-col flex-grow">
+        <div className="mb-4 flex-grow">
+          <h3 className="font-bold text-lg text-gray-900 mb-1 line-clamp-1">{unitType}</h3>
+          
+          <div className="flex items-start gap-1 text-gray-500 text-sm mb-3">
+            <MapPin size={14} className="mt-0.5 flex-shrink-0 text-[#a86add]" />
+            <span className="line-clamp-2">{location}</span>
+          </div>
+        </div>
 
-      <div className="flex justify-end">
-        <button 
-          onClick={handleBookNow} 
-          disabled={loading}
-          className="flex items-center gap-1 bg-white border-2 border-[#4b3b32] text-[#4b3b32] px-4 py-1.5 rounded-full text-xs font-bold hover:bg-[#4b3b32] hover:text-white transition-colors uppercase tracking-wider disabled:opacity-50"
-        >
-          {loading ? <Loader2 className="animate-spin" size={14} /> : <>Book Now <ChevronRight size={14} /></>}
-        </button>
+        {/* Price and Button Section */}
+        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          <div>
+            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Rent</p>
+            <p className="text-[#a86add] font-extrabold text-lg">{price}</p>
+          </div>
+          
+          <button 
+            onClick={handleViewDetails} 
+            className="bg-[#3a2a22] text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-[#a86add] transition-colors flex items-center gap-2 group-hover:shadow-lg"
+          >
+            View Details <ChevronRight size={16} />
+          </button>
+        </div>
       </div>
     </div>
   );

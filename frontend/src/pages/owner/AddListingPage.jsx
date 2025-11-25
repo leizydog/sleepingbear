@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/organisms/Header';
 import ListingProgress from '../../components/molecules/ListingProgress';
-import Icon from '../../components/atoms/Icon';
 import { propertyAPI } from '../../services/api'; 
 import { Loader2, Check, Plus, X, Image as ImageIcon, CreditCard, Smartphone, Banknote } from 'lucide-react';
 
@@ -12,7 +11,9 @@ const AddListingPage = () => {
   const [loading, setLoading] = useState(false);
 
   // --- STATE MANAGEMENT ---
-  const [images, setImages] = useState([]); 
+  const [previewImages, setPreviewImages] = useState([]); // For showing on screen
+  const [imageFiles, setImageFiles] = useState([]);       // For sending to backend
+  
   const [formData, setFormData] = useState({
     // Property Details
     condoName: '',
@@ -70,23 +71,50 @@ const AddListingPage = () => {
 
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-    const newImages = files.map(file => URL.createObjectURL(file));
     
-    if (images.length + newImages.length > 10) {
+    if (previewImages.length + files.length > 10) {
         alert("You can only upload a maximum of 10 images.");
         return;
     }
-    setImages([...images, ...newImages]);
+
+    // 1. Create previews for display
+    const newPreviews = files.map(file => URL.createObjectURL(file));
+    setPreviewImages([...previewImages, ...newPreviews]);
+
+    // 2. Store actual files for upload
+    setImageFiles([...imageFiles, ...files]);
   };
 
   const removeImage = (index) => {
-    setImages(images.filter((_, i) => i !== index));
+    setPreviewImages(previewImages.filter((_, i) => i !== index));
+    setImageFiles(imageFiles.filter((_, i) => i !== index));
   };
 
-  // --- SUBMIT LOGIC ---
+  // --- SUBMIT LOGIC (FIXED) ---
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      // 1. Upload Images First
+      let uploadedImageUrls = [];
+      
+      if (imageFiles.length > 0) {
+          const imageFormData = new FormData();
+          imageFiles.forEach(file => {
+              imageFormData.append('files', file);
+          });
+
+          try {
+              const uploadResponse = await propertyAPI.uploadImages(imageFormData);
+              uploadedImageUrls = uploadResponse.images; // Get real URLs from backend
+          } catch (uploadError) {
+              console.error("Image upload failed:", uploadError);
+              alert("Failed to upload images. Listing creation cancelled.");
+              setLoading(false);
+              return;
+          }
+      }
+
+      // 2. Prepare Description
       let paymentInfoString = "\n\n--- Payment Options ---";
       if (formData.paymentMethods.cash) paymentInfoString += "\n• Cash Payment Accepted (Visit Admin Office)";
       if (formData.paymentMethods.bpi) paymentInfoString += `\n• Bank Transfer (BPI): ${formData.bankDetails.accountNumber} (${formData.bankDetails.accountName})`;
@@ -94,6 +122,7 @@ const AddListingPage = () => {
 
       const finalDescription = (formData.description || `${formData.condoType} unit in ${formData.address}`) + paymentInfoString;
 
+      // 3. Create Payload with Real URLs
       const payload = {
         name: `${formData.condoName} - ${formData.unitNumber}`,
         description: finalDescription,
@@ -103,12 +132,14 @@ const AddListingPage = () => {
         bathrooms: parseInt(formData.bathrooms),
         size_sqm: parseFloat(formData.size),
         status: 'pending',
-        images: images, 
-        image_url: images[0] || "https://via.placeholder.com/400", 
+        images: uploadedImageUrls, // ✅ Send the http://localhost:8000/... URLs
+        image_url: uploadedImageUrls[0] || "https://via.placeholder.com/400", 
         is_available: true
       };
 
+      // 4. Create Property
       await propertyAPI.create(payload);
+      
       alert("Listing submitted successfully! Please wait for Admin approval.");
       navigate('/owner/dashboard'); 
 
@@ -120,7 +151,7 @@ const AddListingPage = () => {
     }
   };
 
-  // --- RENDER FUNCTIONS (Use these to prevent blinking/loss of focus) ---
+  // --- RENDER FUNCTIONS ---
 
   const renderDetails = () => (
     <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
@@ -130,11 +161,11 @@ const AddListingPage = () => {
             <h3 className="text-xl font-bold flex items-center gap-2 text-gray-800">
                 <ImageIcon className="text-[#a86add]" /> Property Photos
             </h3>
-            <span className="text-sm font-medium text-gray-500">{images.length} / 10 Uploaded</span>
+            <span className="text-sm font-medium text-gray-500">{previewImages.length} / 10 Uploaded</span>
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-2">
-            {images.map((src, idx) => (
+            {previewImages.map((src, idx) => (
                 <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group shadow-sm">
                     <img src={src} alt={`preview-${idx}`} className="w-full h-full object-cover" />
                     <button 
@@ -146,7 +177,7 @@ const AddListingPage = () => {
                     {idx === 0 && <div className="absolute bottom-0 w-full bg-black/50 text-white text-[10px] text-center py-1 font-bold">COVER</div>}
                 </div>
             ))}
-            {images.length < 10 && (
+            {previewImages.length < 10 && (
                 <label className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-purple-50 hover:border-[#a86add] transition-all group">
                     <div className="w-10 h-10 rounded-full bg-gray-100 group-hover:bg-[#a86add] flex items-center justify-center transition-colors text-gray-400 group-hover:text-white mb-2">
                         <Plus size={20} />

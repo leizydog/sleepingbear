@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 
 // --- Contexts ---
 import { AuthProvider } from './context/AuthContext';
-import ThemeModule from './context/ThemeContext'; 
+// FIX: Import the named provider directly
+import { DarkModeProvider } from './context/ThemeContext'; 
 import PublicLayout from './components/templates/PublicLayout';
 
 // --- Pages ---
@@ -22,9 +23,6 @@ import SettingsPage from './pages/settings/SettingsPage';
 // --- CSS ---
 import './index.css';
 
-// Destructuring the Theme Provider from the imported module
-const { ThemeProvider } = ThemeModule; 
-
 // --- Placeholder Component ---
 const Placeholder = ({ title }) => (
   <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-800 transition-colors">
@@ -40,7 +38,8 @@ const Placeholder = ({ title }) => (
 function App() {
   return (
     <AuthProvider>
-      <ThemeProvider>
+      {/* FIX: Use the named provider here */}
+      <DarkModeProvider>
         <Router>
           <Routes>
             {/* Public Routes */}
@@ -51,7 +50,6 @@ function App() {
             <Route path="/login" element={<PublicLayout><LoginPage /></PublicLayout>} />
             <Route path="/register" element={<PublicLayout><RegisterPage /></PublicLayout>} />
             
-
             {/* Private User Flow */}
             <Route path="/bookings" element={<BookingPage />} />
             <Route path="/payment" element={<PaymentPage />} />
@@ -59,7 +57,6 @@ function App() {
             <Route path="/settings" element={<SettingsPage />} />
 
             {/* Dashboards */}
-            {/* FIX: Added '/>' at the end of this line */}
             <Route path="/admin/*" element={<AdminDashboard />} />
             <Route path="/owner/dashboard" element={<OwnerDashboard />} />
             <Route path="/owner/add-listing" element={<AddListingPage />} />
@@ -71,7 +68,7 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
-      </ThemeProvider>
+      </DarkModeProvider>
     </AuthProvider>
   );
 }

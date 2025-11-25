@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { authAPI } from '../../services/api'; // Use API directly to avoid auto-login context
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
   
   // 1. State for all form fields
   const [formData, setFormData] = useState({
@@ -49,15 +49,19 @@ const RegisterPage = () => {
       username: formData.email.split('@')[0] + Math.floor(Math.random() * 1000) // Generate unique username
     };
 
-    // 4. Call API via Context
-    const result = await register(payload);
-    
-    setIsLoading(false);
+    try {
+      // 4. Call API directly (Does not auto-login)
+      await authAPI.register(payload);
+      
+      // 5. Redirect to Login on Success
+      alert("Registration successful! Please login.");
+      navigate('/login');
 
-    if (result.success) {
-      navigate('/search'); // Redirect to main app on success
-    } else {
-      setError(result.message || 'Registration failed. Please try again.');
+    } catch (err) {
+      console.error("Registration failed:", err);
+      setError(err.response?.data?.detail || 'Registration failed. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 

@@ -68,13 +68,17 @@ export const bookingAPI = {
   getOne: async (id) => (await api.get(`/bookings/${id}`)).data,
   updateStatus: async (id, status) => (await api.put(`/bookings/${id}`, { status })).data,
   cancel: async (id) => (await api.delete(`/bookings/${id}`)).data,
+  getOccupiedDates: async (id) => (await api.get(`/bookings/property/${id}/occupied`)).data,
 };
 
 export const paymentsAPI = {
   getAll: async () => (await api.get('/payments/')).data,
   getMethods: async () => (await api.get('/payments/methods')).data,
   createIntent: async (data) => (await api.post('/payments/create-intent', data)).data,
-  confirmPayment: async (data) => (await api.post('/payments/confirm', data)).data,
+  
+  // --- FIX: Renamed from confirmPayment to confirm ---
+  confirm: async (data) => (await api.post('/payments/confirm', data)).data, 
+  
   getMyPayments: async () => (await api.get('/payments/my-payments')).data,
   getBookingPayments: async (id) => (await api.get(`/payments/booking/${id}`)).data,
 };

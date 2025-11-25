@@ -1,31 +1,52 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const ThemeContext = createContext();
+// 1. Create the Context
+const DarkModeContext = createContext();
 
-const ThemeProvider = ({ children }) => { // Removed 'export const'
-    // 1. Initial State: Check system preference or saved preference
-    const [isDarkMode, setIsDarkMode] = useState(
-        localStorage.getItem('theme') === 'dark' || 
-        (window.matchMedia('(prefers-color-scheme: dark)').matches && localStorage.getItem('theme') !== 'light')
-    );
+// 2. Create the Provider Component
+export const DarkModeProvider = ({ children }) => {
+  // Initialize state: Check localStorage first, then System Preference
+  const [isDark, setIsDark] = useState(() => {
+    try {
+        const saved = localStorage.getItem('darkMode');
+        if (saved !== null) {
+            return JSON.parse(saved);
+        }
+        // Fallback to system preference
+        if (typeof window !== 'undefined') {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+    } catch (error) {
+        console.log("Error reading theme preference:", error);
+    }
+    return false;
+  });
 
-    // 2. Effect to apply/save preference and toggle 'dark' class on <html>
-    useEffect(() => {
-        const theme = isDarkMode ? 'dark' : 'light';
-        document.documentElement.classList.toggle('dark', isDarkMode);
-        localStorage.setItem('theme', theme);
-    }, [isDarkMode]);
+  // Effect: Update the <html> class and save to localStorage whenever isDark changes
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (isDark) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('darkMode', JSON.stringify(isDark));
+  }, [isDark]);
 
-    const toggleDarkMode = () => setIsDarkMode(prev => !prev);
+  const toggleDarkMode = () => setIsDark(prev => !prev);
 
-    return (
-        <ThemeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
-            {children}
-        </ThemeContext.Provider>
-    );
+  return (
+    <DarkModeContext.Provider value={{ isDark, toggleDarkMode }}>
+      {children}
+    </DarkModeContext.Provider>
+  );
 };
 
-const useTheme = () => useContext(ThemeContext); // Removed 'export const'
-
-// FIX: Export ThemeProvider and useTheme as a single default object
-export default { ThemeProvider, useTheme };
+// 3. Create the Hook
+export const useDarkMode = () => {
+  const context = useContext(DarkModeContext);
+  if (context === undefined) {
+    throw new Error('useDarkMode must be used within a DarkModeProvider');
+  }
+  return context;
+};
