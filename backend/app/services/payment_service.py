@@ -2,9 +2,13 @@ import stripe
 import os
 from datetime import datetime
 import json
+from dotenv import load_dotenv # ✅ Load dotenv package
 
-# Initialize Stripe (use test keys for development)
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY", "sk_test_your_test_key_here")
+# ✅ Load environment variables from .env file
+load_dotenv()
+
+# ✅ Get key from .env (No hardcoded fallback)
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 class PaymentService:
     
@@ -17,13 +21,12 @@ class PaymentService:
             # 1. Map our internal types to Stripe types
             stripe_method_types = []
             
-            if payment_method_type == 'bpi':
-                # BPI in Stripe (via PayMongo or direct) often uses 'card' or 'grabpay' for testing
-                # For this demo, we map BPI to 'card' so you can type test numbers.
+            if payment_method_type == 'gcash':
+                # Requires Stripe to be enabled for GCash in Dashboard
+                stripe_method_types = ['gcash']
+            elif payment_method_type == 'card' or payment_method_type == 'bpi':
+                # For testing BPI/Card, we use the generic 'card' type
                 stripe_method_types = ['card']
-            elif payment_method_type == 'gcash':
-                # Note: 'gcash' payment method requires a Stripe account in a supported region
-                stripe_method_types = ['card'] # Fallback to card for stability if gcash isn't enabled
             else:
                 stripe_method_types = ['card']
 
@@ -41,7 +44,6 @@ class PaymentService:
                 'payment_intent_id': intent.id,
                 'amount': amount,
             }
-        # ✅ FIXED: Use stripe.error.StripeError instead of stripe.StripeError
         except stripe.error.StripeError as e:
             print(f"Stripe Error: {e}")
             return {
@@ -73,7 +75,6 @@ class PaymentService:
                 'amount': intent.amount / 100,  # Convert back to pesos
                 'payment_method': intent.payment_method_types[0] if intent.payment_method_types else 'unknown',
             }
-        # ✅ FIXED: Exception handling here too
         except stripe.error.StripeError as e:
             return {
                 'success': False,
