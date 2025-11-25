@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/organisms/Header';
 import HomeSearchSection from '../components/organisms/HomeSearchSection';
 import FeaturedListings from '../components/organisms/FeaturedListings';
-import PromoBanner from '../components/organisms/PromoBanner'; // Added PromoBanner
+import PromoBanner from '../components/organisms/PromoBanner';
 
 // --- CONTEXT & SERVICES ---
 import { useAuth } from '../context/AuthContext';
@@ -32,7 +32,6 @@ const LandingPage = () => {
                 setLoading(true);
                 const response = await propertyAPI.getAll();
                 
-                // ✅ FIX: Access 'response.properties' directly (api.js already unwraps .data)
                 const dataList = response.properties || []; 
 
                 const formattedProps = dataList.map(p => ({
@@ -44,8 +43,6 @@ const LandingPage = () => {
                 }));
 
                 setProperties(formattedProps);
-                // Don't show all properties immediately in "Search Results", 
-                // but we can show them in "Featured" if needed.
                 setFilteredResults(formattedProps); 
             } catch (error) {
                 console.error("Failed to load properties:", error);
@@ -62,7 +59,6 @@ const LandingPage = () => {
     // ==============================
     const handleSearch = (filters) => {
         setLoading(true);
-        // Simulate a small delay for UX or filter immediately
         setTimeout(() => {
             const results = properties.filter(prop => {
                 const matchLoc = filters.location 
@@ -112,6 +108,18 @@ const LandingPage = () => {
                             <p className="text-lg md:text-xl text-gray-700 font-medium">
                                 Discover comfort and luxury in the heart of the city.
                             </p>
+                        </div>
+
+                        {/* DOWNLOAD APP BUTTON */}
+                        <div className="pt-4">
+                            <a href="/sleeping-bear.apk" download className="inline-block">
+                                <button className="bg-[#a86add] hover:bg-[#9155cc] text-white font-semibold px-8 py-3 rounded-full shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 flex items-center gap-2 mx-auto">
+                                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                                    </svg>
+                                    Download Android App
+                                </button>
+                            </a>
                         </div>
                     </div>
                     
