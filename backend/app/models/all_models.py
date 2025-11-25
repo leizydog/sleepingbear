@@ -65,10 +65,18 @@ class Property(Base):
     images = Column(JSON, default=[]) 
     image_url = Column(String) 
     
-    # ✅ NEW: Payment Methods
+    # ✅ Payment Methods
+    # ✅ Payment Methods
     accepts_bpi = Column(Boolean, default=False)
     accepts_gcash = Column(Boolean, default=False)
     accepts_cash = Column(Boolean, default=False)
+
+    # ✅ Account Numbers
+    gcash_number = Column(String, nullable=True)
+    bpi_number = Column(String, nullable=True)
+
+    # ✅ NEW: QR Code Image URL
+    gcash_qr_image_url = Column(String, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow)
     

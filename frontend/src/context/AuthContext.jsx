@@ -39,9 +39,23 @@ export const AuthProvider = ({ children }) => {
       return { success: true, role: loggedInUser.role }; 
     } catch (error) {
       console.error("Login failed:", error);
+      
+      // FIX: Robust error handling to prevent React Object crash
+      let errorMessage = "Invalid email or password";
+      const detail = error.response?.data?.detail;
+
+      if (typeof detail === 'string') {
+        errorMessage = detail;
+      } else if (Array.isArray(detail)) {
+        // Handle FastAPI validation errors (array of objects)
+        errorMessage = detail.map(err => err.msg).join(', ');
+      } else if (typeof detail === 'object' && detail !== null) {
+        errorMessage = JSON.stringify(detail);
+      }
+
       return { 
         success: false, 
-        message: error.response?.data?.detail || "Invalid email or password" 
+        message: errorMessage
       };
     }
   };
@@ -53,9 +67,19 @@ export const AuthProvider = ({ children }) => {
       if (data.user) setUser(data.user);
       return { success: true, role: data.user?.role };
     } catch (error) {
+      // Similar safety check for registration errors
+      let errorMessage = "Registration failed";
+      const detail = error.response?.data?.detail;
+
+      if (typeof detail === 'string') {
+        errorMessage = detail;
+      } else if (Array.isArray(detail)) {
+        errorMessage = detail.map(err => err.msg).join(', ');
+      }
+
       return { 
         success: false, 
-        message: error.response?.data?.detail || "Registration failed" 
+        message: errorMessage
       };
     }
   };

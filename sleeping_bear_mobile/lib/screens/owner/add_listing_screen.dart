@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; 
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../providers/property_provider.dart';
 
 class AddListingScreen extends StatefulWidget {
   const AddListingScreen({super.key});
@@ -15,6 +17,9 @@ class _AddListingScreenState extends State<AddListingScreen> {
   int _currentStep = 1;
   bool _isLoading = false;
   
+  // ✅ NEW: QR Image State
+  XFile? _gcashQrImage; 
+
   // ✅ REAL IMAGE STATE
   final ImagePicker _picker = ImagePicker();
   final List<XFile> _selectedImages = []; 
@@ -27,7 +32,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
   final _addressController = TextEditingController();
   final _descriptionController = TextEditingController();
   
-  // Payment Controllers
+  // ✅ Payment Controllers (Account Numbers)
   final _bpiNameController = TextEditingController();
   final _bpiNumberController = TextEditingController();
   final _gcashNameController = TextEditingController();
@@ -73,6 +78,18 @@ class _AddListingScreenState extends State<AddListingScreen> {
     }
   }
 
+  // ✅ NEW: Pick QR Image
+  Future<void> _pickQrImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        setState(() => _gcashQrImage = image);
+      }
+    } catch (e) {
+      debugPrint('Error picking QR: $e');
+    }
+  }
+
   void _removeImage(int index) {
     setState(() {
       _selectedImages.removeAt(index);
@@ -81,20 +98,16 @@ class _AddListingScreenState extends State<AddListingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ FULL DARK MODE INTEGRATION
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).primaryColor; 
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     final cardColor = Theme.of(context).cardColor;
-    
     final textColor = isDark ? Colors.white : const Color(0xFF1F2937);
     final subTextColor = isDark ? Colors.grey[400] : Colors.grey[600];
     final inputFill = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFF9FAFB);
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      
-      // --- APP BAR ---
       appBar: AppBar(
         backgroundColor: backgroundColor,
         elevation: 0,
@@ -108,8 +121,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
           style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 17),
         ),
       ),
-
-      // --- BODY ---
       body: Stack(
         children: [
           Column(
@@ -127,11 +138,9 @@ class _AddListingScreenState extends State<AddListingScreen> {
               ),
             ],
           ),
-          
           if (_isLoading) _buildLoadingOverlay(isDark, primaryColor),
         ],
       ),
-      
       bottomNavigationBar: _buildBottomBar(cardColor, isDark, primaryColor),
     );
   }
@@ -214,7 +223,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
       key: const ValueKey(1),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // --- IMAGE UPLOAD SECTION ---
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -226,14 +234,12 @@ class _AddListingScreenState extends State<AddListingScreen> {
         const Text('Add 3-10 photos. First photo will be the cover.', style: TextStyle(fontSize: 12, color: Colors.grey)),
         const SizedBox(height: 12),
         
-        // Gallery Area
         SizedBox(
           height: 110,
           child: ListView(
             scrollDirection: Axis.horizontal,
             clipBehavior: Clip.none,
             children: [
-              // Add Button
               if (_selectedImages.length < 10)
                 GestureDetector(
                   onTap: _pickImages,
@@ -256,11 +262,9 @@ class _AddListingScreenState extends State<AddListingScreen> {
                   ),
                 ),
               
-              // Image List Rendering
               ..._selectedImages.asMap().entries.map((entry) {
                 final int index = entry.key;
                 final XFile imageFile = entry.value;
-
                 return Stack(
                   children: [
                     Container(
@@ -275,8 +279,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
                         ),
                       ),
                     ),
-                    
-                    // Remove Button
                     Positioned(
                       top: 4,
                       right: 16,
@@ -289,8 +291,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
                         ),
                       ),
                     ),
-                    
-                    // Cover Label
                     if (index == 0)
                       Positioned(
                         bottom: 0,
@@ -315,7 +315,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
 
         const SizedBox(height: 30),
 
-        // --- INPUT FIELDS ---
         _buildSectionTitle('Basic Info', subTextColor),
         const SizedBox(height: 16),
         Row(
@@ -367,7 +366,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
   }
 
   // ===========================================================================
-  // 💳 STEP 2: PAYMENT METHODS
+  // 💳 STEP 2: PAYMENT METHODS (WITH QR UPLOAD)
   // ===========================================================================
   Widget _buildPaymentStep(bool isDark, Color inputFill, Color textColor, Color primaryColor) {
     final subTextColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
@@ -380,6 +379,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
         const Text('Select accepted payment methods for tenants.', style: TextStyle(color: Colors.grey, fontSize: 13)),
         const SizedBox(height: 24),
 
+        // BPI
         _buildBrandedCard(
           title: 'BPI Transfer', 
           brandColor: const Color(0xFFB1000E),
@@ -395,6 +395,8 @@ class _AddListingScreenState extends State<AddListingScreen> {
           ]),
         ),
         const SizedBox(height: 16),
+
+        // ✅ GCASH WITH QR UPLOAD
         _buildBrandedCard(
           title: 'GCash', 
           brandColor: const Color(0xFF007DFE),
@@ -407,9 +409,39 @@ class _AddListingScreenState extends State<AddListingScreen> {
             _buildModernInput(_gcashNameController, 'Account Name', null, isDark, textColor, inputFill, primaryColor),
             const SizedBox(height: 12),
             _buildModernInput(_gcashNumberController, 'Mobile Number', null, isDark, textColor, inputFill, primaryColor, isNumber: true),
+            const SizedBox(height: 16),
+            
+            // ✅ QR UPLOAD BUTTON
+            GestureDetector(
+              onTap: _pickQrImage,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.grey[800] : Colors.grey[100],
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[300]!, style: BorderStyle.solid),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.qr_code_scanner, color: primaryColor),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _gcashQrImage != null ? 'QR Code Selected' : 'Upload Your QR Code',
+                        style: TextStyle(color: _gcashQrImage != null ? Colors.green : Colors.grey[600], fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    if (_gcashQrImage != null) const Icon(Icons.check_circle, color: Colors.green),
+                  ],
+                ),
+              ),
+            )
           ]),
         ),
+        
         const SizedBox(height: 16),
+
+        // Cash
         _buildBrandedCard(
           title: 'Cash', 
           brandColor: const Color(0xFF00C853),
@@ -424,7 +456,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
           child: Container(
             margin: const EdgeInsets.only(top: 8),
             padding: const EdgeInsets.all(12),
-            // ✅ FIXED HARDCODED COLORS HERE
             decoration: BoxDecoration(
               color: isDark ? const Color(0xFF1B5E20).withValues(alpha: 0.2) : const Color(0xFFE8F5E9), 
               borderRadius: BorderRadius.circular(8),
@@ -464,7 +495,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
           ),
           child: Column(
             children: [
-              // Photo Preview Strip
               SizedBox(
                 height: 60,
                 child: Row(
@@ -489,12 +519,8 @@ class _AddListingScreenState extends State<AddListingScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              
               Text('Review Listing', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textColor)),
-              const SizedBox(height: 4),
-              const Text('Please ensure all details are correct.', style: TextStyle(color: Colors.grey, fontSize: 12)),
               const Divider(height: 32),
-              
               _buildReviewRow('Property', '${_condoNameController.text} ${_unitNumberController.text}', textColor, subTextColor, primaryColor),
               const SizedBox(height: 12),
               _buildReviewRow('Location', _addressController.text, textColor, subTextColor, primaryColor),
@@ -503,7 +529,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
               
               const SizedBox(height: 24),
               
-              // --- ACCEPTED PAYMENTS REVIEW ---
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -557,7 +582,6 @@ class _AddListingScreenState extends State<AddListingScreen> {
     {bool isNumber = false, String? hint, Color? brandColor}
   ) {
     final activeColor = brandColor ?? primaryColor;
-    
     return Container(
       decoration: BoxDecoration(
         color: inputFill,
@@ -680,6 +704,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
     );
   }
 
+  // ✅ HELPER: REVIEW ROW
   Widget _buildReviewRow(String label, String value, Color textColor, Color? subTextColor, Color primaryColor, {bool isHighlight = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -694,6 +719,7 @@ class _AddListingScreenState extends State<AddListingScreen> {
     );
   }
 
+  // ✅ HELPER: BRAND TAG
   Widget _buildBrandTag(String label, Color textColor, Color bgColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -777,10 +803,58 @@ class _AddListingScreenState extends State<AddListingScreen> {
 
   Future<void> _handleSubmit() async {
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2)); 
+    
+    // 1. Upload QR if exists
+    String? uploadedQrUrl;
+    if (_acceptsGcash && _gcashQrImage != null) {
+      try {
+        uploadedQrUrl = await Provider.of<PropertyProvider>(context, listen: false)
+            .uploadSingleImage(_gcashQrImage!);
+      } catch (e) {
+        print("QR Upload Failed: $e");
+      }
+    }
+    
+    // 2. Prepare Data
+    final propertyData = {
+      'name': '${_condoNameController.text} ${_unitNumberController.text}',
+      'address': _addressController.text,
+      'description': _descriptionController.text,
+      'price_per_month': double.tryParse(_priceController.text) ?? 0.0,
+      'size_sqm': double.tryParse(_sizeController.text) ?? 0.0,
+      'bedrooms': _bedrooms,
+      'bathrooms': _bathrooms,
+      
+      'accepts_bpi': _acceptsBpi,
+      'accepts_gcash': _acceptsGcash,
+      'accepts_cash': _acceptsCash,
+      
+      // ✅ SEND NUMBERS
+      'gcash_number': _acceptsGcash ? _gcashNumberController.text : null,
+      'bpi_number': _acceptsBpi ? _bpiNumberController.text : null,
+      // ✅ Send QR URL
+      'gcash_qr_image_url': uploadedQrUrl,
+    };
+
+    final success = await Provider.of<PropertyProvider>(context, listen: false).addProperty(
+      propertyData: propertyData,
+      images: _selectedImages,
+    );
+
     if (!mounted) return;
     setState(() => _isLoading = false);
 
+    if (success) {
+      _showSuccessDialog();
+    } else {
+      final error = Provider.of<PropertyProvider>(context, listen: false).error;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit: $error'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  void _showSuccessDialog() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final dialogBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final textColor = isDark ? Colors.white : const Color(0xFF1F2937);

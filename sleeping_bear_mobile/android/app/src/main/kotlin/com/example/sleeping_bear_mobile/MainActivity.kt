@@ -1,5 +1,6 @@
 package com.example.sleeping_bear_mobile
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity // ✅ CHANGED IMPORT
 
-class MainActivity : FlutterActivity()
+class MainActivity: FlutterFragmentActivity() { // ✅ CHANGED INHERITANCE
+}

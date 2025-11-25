@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:async'; // Kailangan ito para sa Timer
+import 'package:flutter_stripe/flutter_stripe.dart'; 
+import 'dart:async'; 
 
 import 'providers/auth_provider.dart';
 import 'providers/property_provider.dart';
+import 'providers/booking_provider.dart'; 
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
-import 'screens/splash_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Replace with your actual Stripe Test Publishable Key
+  Stripe.publishableKey = 'pk_test_your_publishable_key_here'; 
+  await Stripe.instance.applySettings();
+
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key}); // ✅ FIXED
 
   @override
   Widget build(BuildContext context) {
@@ -21,15 +28,16 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => PropertyProvider()),
+        ChangeNotifierProvider(create: (_) => BookingProvider()), 
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Sleeping Bear Rental',
         theme: ThemeData(
-          primarySwatch: Colors.purple, // Ginawa kong purple para match sa logo
+          primarySwatch: Colors.purple,
           useMaterial3: true,
         ),
-       home: const SplashScreen(),
+        home: const AuthWrapper(), 
         routes: {
           '/login': (context) => const LoginScreen(),
           '/home': (context) => const HomeScreen(),
@@ -40,39 +48,36 @@ class MyApp extends StatelessWidget {
 }
 
 class AuthWrapper extends StatefulWidget {
-  const AuthWrapper({Key? key}) : super(key: key);
+  const AuthWrapper({super.key}); // ✅ FIXED
 
   @override
   State<AuthWrapper> createState() => _AuthWrapperState();
 }
 
 class _AuthWrapperState extends State<AuthWrapper> {
-  bool _showSplash = true; // Control kung ipapakita ang splash o ang app
-  double _opacity = 0.0;   // Para sa fade-in effect
+  bool _showSplash = true;
+  double _opacity = 0.0;
 
   @override
   void initState() {
     super.initState();
     
-    // 1. Check Auth (Sa background)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<AuthProvider>(context, listen: false).checkAuth();
     });
 
-    // 2. Start Animation (Fade In)
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         setState(() {
-          _opacity = 1.0; // Lilitaw ang logo
+          _opacity = 1.0;
         });
       }
     });
 
-    // 3. Tapusin ang Splash Screen pagkalipas ng 3 seconds
     Timer(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() {
-          _showSplash = false; // Ilipat na sa Login o Home
+          _showSplash = false;
         });
       }
     });
@@ -80,13 +85,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    // Kung true ang _showSplash, ipakita ang Logo Animation
     if (_showSplash) {
       return Scaffold(
-        backgroundColor: Colors.white, // White background para sa .jpg logo
+        backgroundColor: Colors.white,
         body: Center(
           child: AnimatedOpacity(
-            duration: const Duration(seconds: 2), // 2 seconds na dahan-dahang paglitaw
+            duration: const Duration(seconds: 2),
             opacity: _opacity,
             curve: Curves.easeOut,
             child: colSplashContent(),
@@ -95,7 +99,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
       );
     }
 
-    // Kung tapos na ang splash, gamitin ang dating logic mo (Auth Check)
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         if (authProvider.isAuthenticated) {
@@ -107,7 +110,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
     );
   }
 
-  // Hiniwalay ko lang para malinis tignan
   Widget colSplashContent() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -115,7 +117,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
         SizedBox(
           height: 200,
           width: 200,
-          // Siguraduhin na tama ang path ng image mo dito
           child: Image.asset('assets/images/sleeping_bear_logo.jpg'),
         ),
         const SizedBox(height: 20),
@@ -125,11 +126,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: Colors.purple,
-            fontFamily: 'Sans-serif', // Pwede mong baguhin font
+            fontFamily: 'Sans-serif',
           ),
         ),
         const SizedBox(height: 30),
-        // Loading indicator sa baba
         const CircularProgressIndicator(
           valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
         ),

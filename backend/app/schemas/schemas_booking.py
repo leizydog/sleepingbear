@@ -2,6 +2,7 @@ from pydantic import BaseModel, validator
 from datetime import datetime
 from typing import Optional, List
 from app.models.all_models import BookingStatus, PaymentStatus
+from app.schemas.schemas_property import PropertyResponse
 
 class BookingBase(BaseModel):
     property_id: int
@@ -32,6 +33,8 @@ class BookingResponse(BookingBase):
     created_at: datetime
     # --- NEW: Include payments list so frontend can see the status ---
     payments: List[PaymentSummary] = []
+
+    property: Optional[PropertyResponse] = None
     
     class Config:
         from_attributes = True

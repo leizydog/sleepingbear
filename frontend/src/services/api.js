@@ -26,12 +26,7 @@ api.interceptors.response.use(
 
 export const authAPI = {
   login: async (credentials) => {
-    const formData = new URLSearchParams();
-    formData.append('username', credentials.email);
-    formData.append('password', credentials.password);
-    const response = await api.post('/auth/login', formData, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    });
+    const response = await api.post('/auth/login', credentials);
     if (response.data.access_token) localStorage.setItem('auth_token', response.data.access_token);
     return response.data;
   },
@@ -45,13 +40,16 @@ export const authAPI = {
 
 export const propertyAPI = {
   getAll: async (params) => (await api.get('/properties/', { params })).data,
+  
+  // ✅ NEW: Get Owner's Listings
+  getMyListings: async () => (await api.get('/properties/my-listings')).data, 
+  
   getOne: async (id) => (await api.get(`/properties/${id}`)).data,
   create: async (data) => (await api.post('/properties/', data)).data,
   update: async (id, data) => (await api.put(`/properties/${id}`, data)).data,
   updateStatus: async (id, status) => (await api.put(`/properties/${id}/status`, null, { params: { status_update: status } })).data,
   delete: async (id) => (await api.delete(`/properties/${id}`)).data,
   
-  // --- NEW: Upload Images ---
   uploadImages: async (formData) => {
     const response = await api.post('/properties/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -65,6 +63,10 @@ export const bookingAPI = {
   checkAvailability: async (data) => (await api.post('/bookings/check-availability', data)).data,
   getAll: async () => (await api.get('/bookings/')).data,
   getMyBookings: async () => (await api.get('/bookings/my-bookings')).data,
+  
+  // ✅ NEW: Get Owner's Received Bookings
+  getOwnerBookings: async () => (await api.get('/bookings/owner-bookings')).data,
+  
   getOne: async (id) => (await api.get(`/bookings/${id}`)).data,
   updateStatus: async (id, status) => (await api.put(`/bookings/${id}`, { status })).data,
   cancel: async (id) => (await api.delete(`/bookings/${id}`)).data,
@@ -75,16 +77,28 @@ export const paymentsAPI = {
   getAll: async () => (await api.get('/payments/')).data,
   getMethods: async () => (await api.get('/payments/methods')).data,
   createIntent: async (data) => (await api.post('/payments/create-intent', data)).data,
-  
-  // --- FIX: Renamed from confirmPayment to confirm ---
   confirm: async (data) => (await api.post('/payments/confirm', data)).data, 
-  
   getMyPayments: async () => (await api.get('/payments/my-payments')).data,
   getBookingPayments: async (id) => (await api.get(`/payments/booking/${id}`)).data,
+  uploadReceipt: async (formData) => {
+    const response = await api.post('/payments/upload-receipt', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+  review: async (id, action) => (await api.put(`/payments/${id}/review`, null, { 
+    params: { action } 
+  })).data,
 };
 
 export const reportsAPI = {
   getDashboardStats: async () => (await api.get('/reports/dashboard')).data,
+};
+
+// ✅ NEW: Audit API
+export const auditAPI = {
+  getLogs: async (params) => (await api.get('/audit/logs', { params })).data,
+  getUserActivity: async (userId) => (await api.get(`/audit/user/${userId}`)).data,
 };
 
 export default api;

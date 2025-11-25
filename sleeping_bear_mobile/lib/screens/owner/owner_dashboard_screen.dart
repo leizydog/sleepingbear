@@ -1,147 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'add_listing_screen.dart';
 import '../properties/property_detail_screen.dart';
 import '../../models/property.dart';
+import '../../models/booking.dart';
+import '../../providers/property_provider.dart';
+import '../../providers/booking_provider.dart';
 import 'booking_detail_screen.dart';
 
-// --- MODELS ---
-class OwnerProperty {
-  final String id;
-  final String name;
-  final String address;
-  final String status; 
-  final double price;
-  final bool isAvailable;
-  final String? imageUrl;
-  
-  final int bedrooms;
-  final int bathrooms;
-  final double sizeSqm;
-  final String description;
-
-  OwnerProperty({
-    required this.id,
-    required this.name,
-    required this.address,
-    required this.status,
-    required this.price,
-    this.isAvailable = true,
-    this.imageUrl,
-    this.bedrooms = 1,
-    this.bathrooms = 1,
-    this.sizeSqm = 24.0,
-    this.description = 'No description provided.',
-  });
-}
-
-class OwnerBooking {
-  final String id;
-  final String propertyName;
-  final String tenantName; 
-  final DateTime startDate;
-  final DateTime endDate;
-  final double totalAmount;
-  final String status; 
-  final String? imageUrl;
-
-  OwnerBooking({
-    required this.id,
-    required this.propertyName,
-    required this.tenantName,
-    required this.startDate,
-    required this.endDate,
-    required this.totalAmount,
-    required this.status,
-    this.imageUrl,
-  });
-}
-
-class OwnerDashboardScreen extends StatelessWidget {
+class OwnerDashboardScreen extends StatefulWidget {
   final VoidCallback? onMenuTap;
   const OwnerDashboardScreen({super.key, this.onMenuTap});
 
+  @override
+  State<OwnerDashboardScreen> createState() => _OwnerDashboardScreenState();
+}
+
+class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   final Color _primaryDark = const Color(0xFF4A00E0);
   final Color _primaryLight = const Color(0xFF8E2DE2);
 
   @override
+  void initState() {
+    super.initState();
+    // ✅ Load Real Data
+    Future.microtask(() {
+      Provider.of<PropertyProvider>(context, listen: false).fetchMyListings();
+      Provider.of<BookingProvider>(context, listen: false).fetchOwnerBookings();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // ✅ DARK MODE VARIABLES (Using non-nullable fallbacks)
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     final cardColor = Theme.of(context).cardColor;
-    
-    // Explicitly defining non-nullable colors
-    final Color textColor = isDark ? Colors.white : Colors.black87;
-    final Color subTextColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
-
-    // --- MOCK DATA ---
-    final pendingProps = [
-      OwnerProperty(
-        id: '101',
-        name: 'SMDC Grass 24-B',
-        address: 'Quezon City, Metro Manila',
-        status: 'pending',
-        price: 25000,
-        imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267',
-        bedrooms: 1, bathrooms: 1, sizeSqm: 26.5,
-      ),
-      OwnerProperty(
-        id: '102',
-        name: 'Azure Urban 12',
-        address: 'Parañaque City',
-        status: 'pending',
-        price: 18000,
-        imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688',
-        bedrooms: 0, bathrooms: 1, sizeSqm: 22.0,
-      ),
-    ];
-
-    final activeProps = [
-      OwnerProperty(
-        id: '201',
-        name: 'Jazz Residences 101',
-        address: 'Makati City',
-        status: 'active',
-        price: 18000,
-        isAvailable: true,
-        imageUrl: 'https://images.unsplash.com/photo-1567767292278-a4f21aa2d36e',
-        bedrooms: 1, bathrooms: 1, sizeSqm: 28.0,
-      ),
-      OwnerProperty(
-        id: '205',
-        name: 'Shore 2 Tower 3',
-        address: 'Pasay City',
-        status: 'active',
-        price: 30000,
-        isAvailable: false,
-        imageUrl: 'https://images.unsplash.com/photo-1600596542815-2495db9dc2c3',
-        bedrooms: 2, bathrooms: 2, sizeSqm: 45.0,
-      ),
-    ];
-
-    final bookings = [
-      OwnerBooking(
-        id: 'BK-901',
-        propertyName: 'Jazz Residences 101',
-        tenantName: 'John Doe',
-        startDate: DateTime(2023, 10, 1),
-        endDate: DateTime(2023, 10, 5),
-        totalAmount: 5000,
-        status: 'confirmed',
-        imageUrl: 'https://images.unsplash.com/photo-1567767292278-a4f21aa2d36e',
-      ),
-      OwnerBooking(
-        id: 'BK-902',
-        propertyName: 'Shore 2 Tower 3',
-        tenantName: 'Maria Clara',
-        startDate: DateTime(2023, 11, 12),
-        endDate: DateTime(2023, 11, 15),
-        totalAmount: 12000,
-        status: 'pending',
-        imageUrl: 'https://images.unsplash.com/photo-1600596542815-2495db9dc2c3',
-      ),
-    ];
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subTextColor = isDark ? Colors.grey[400]! : Colors.grey[600]!;
 
     return DefaultTabController(
       length: 3,
@@ -153,7 +49,7 @@ class OwnerDashboardScreen extends StatelessWidget {
           centerTitle: true,
           leading: IconButton(
             icon: Icon(Icons.menu_rounded, color: textColor),
-            onPressed: onMenuTap,
+            onPressed: widget.onMenuTap,
           ),
           title: Text(
             'Owner Dashboard',
@@ -172,13 +68,35 @@ class OwnerDashboardScreen extends StatelessWidget {
               Tab(text: 'BOOKINGS'),
             ],
           ),
-        ),
-        body: TabBarView(
-          children: [
-            _buildList(context, pendingProps, isBooking: false, isDark: isDark, cardColor: cardColor, textColor: textColor, subTextColor: subTextColor),
-            _buildList(context, activeProps, isBooking: false, isDark: isDark, cardColor: cardColor, textColor: textColor, subTextColor: subTextColor),
-            _buildList(context, bookings, isBooking: true, isDark: isDark, cardColor: cardColor, textColor: textColor, subTextColor: subTextColor),
+          actions: [
+             IconButton(
+               icon: Icon(Icons.refresh, color: textColor),
+               onPressed: () {
+                 Provider.of<PropertyProvider>(context, listen: false).fetchMyListings();
+                 Provider.of<BookingProvider>(context, listen: false).fetchOwnerBookings();
+               },
+             )
           ],
+        ),
+        body: Consumer2<PropertyProvider, BookingProvider>(
+          builder: (context, propProvider, bookingProvider, child) {
+            if (propProvider.isLoading || bookingProvider.isLoading) {
+              return Center(child: CircularProgressIndicator(color: _primaryDark));
+            }
+
+            // ✅ Filter Data
+            final pendingProps = propProvider.myListings.where((p) => p.status == 'pending').toList();
+            final activeProps = propProvider.myListings.where((p) => p.status == 'approved').toList();
+            final bookings = bookingProvider.ownerBookings;
+
+            return TabBarView(
+              children: [
+                _buildList(context, pendingProps, isBooking: false, isDark: isDark, cardColor: cardColor, textColor: textColor, subTextColor: subTextColor),
+                _buildList(context, activeProps, isBooking: false, isDark: isDark, cardColor: cardColor, textColor: textColor, subTextColor: subTextColor),
+                _buildList(context, bookings, isBooking: true, isDark: isDark, cardColor: cardColor, textColor: textColor, subTextColor: subTextColor),
+              ],
+            );
+          },
         ),
         
         floatingActionButton: Container(
@@ -191,7 +109,7 @@ class OwnerDashboardScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
-                color: _primaryDark.withValues(alpha: 0.4),
+                color: _primaryDark.withOpacity(0.4),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
@@ -204,7 +122,7 @@ class OwnerDashboardScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const AddListingScreen()),
-                );
+                ).then((_) => Provider.of<PropertyProvider>(context, listen: false).fetchMyListings());
               },
               borderRadius: BorderRadius.circular(30),
               child: const Padding(
@@ -251,7 +169,7 @@ class OwnerDashboardScreen extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 80), // Extra bottom padding for FAB
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 80), 
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
@@ -268,26 +186,27 @@ class OwnerDashboardScreen extends StatelessWidget {
     final currencyFormat = NumberFormat.currency(symbol: '₱', decimalDigits: 0);
     final dateFormat = DateFormat('MMM d');
 
-    String title, subtitle, status;
+    String title, subtitle;
+    String status = 'unknown';
     double amount;
     String? imageUrl;
     bool? isAvailable;
-    // ✅ Removed unused guestName variable
 
+    // ✅ Map Real Data
     if (isBooking) {
-      final b = item as OwnerBooking;
-      title = b.propertyName;
-      // guestName = b.tenantName; // We don't use this anymore
+      final b = item as Booking;
+      // Try to get property info if available, else fallback
+      title = b.property?.name ?? 'Property #${b.propertyId}';
       subtitle = '${dateFormat.format(b.startDate)} - ${dateFormat.format(b.endDate)}';
-      status = b.status;
+      status = b.statusDisplay; // Uses helper in Booking model
       amount = b.totalAmount;
-      imageUrl = b.imageUrl;
+      imageUrl = b.property?.imageUrl;
     } else {
-      final p = item as OwnerProperty;
+      final p = item as Property;
       title = p.name;
       subtitle = p.address;
-      status = p.status;
-      amount = p.price;
+      status = p.status; // 'pending' or 'approved'
+      amount = p.pricePerMonth;
       imageUrl = p.imageUrl;
       isAvailable = p.isAvailable;
     }
@@ -299,7 +218,7 @@ class OwnerDashboardScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(20), 
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04), 
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.04), 
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -311,46 +230,28 @@ class OwnerDashboardScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           onTap: () {
             if (isBooking) {
-              final b = item as OwnerBooking;
+              final b = item as Booking;
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => BookingDetailScreen(
-                    bookingId: b.id,
-                    propertyName: b.propertyName,
-                    tenantName: b.tenantName,
+                    bookingId: b.id.toString(),
+                    propertyName: b.property?.name ?? 'Unknown',
+                    tenantName: 'Tenant #${b.userId}', // Need extra API to get user name
                     startDate: b.startDate,
                     endDate: b.endDate,
                     totalAmount: b.totalAmount,
-                    status: b.status,
-                    imageUrl: b.imageUrl,
+                    status: b.statusDisplay,
+                    imageUrl: b.property?.imageUrl,
                   ),
                 ),
               );
             } else {
-              final p = item as OwnerProperty;
-              final fullProperty = Property(
-                id: int.tryParse(p.id) ?? 0,
-                name: p.name,
-                description: p.description,
-                address: p.address,
-                pricePerMonth: p.price,
-                bedrooms: p.bedrooms,
-                bathrooms: p.bathrooms,
-                sizeSqm: p.sizeSqm,
-                imageUrl: p.imageUrl,
-                images: p.imageUrl != null ? [p.imageUrl!] : [],
-                isAvailable: p.isAvailable,
-                ownerId: 0,
-                status: p.status,
-                createdAt: DateTime.now(),
-                updatedAt: DateTime.now(),
-              );
-
+              final p = item as Property;
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => PropertyDetailScreen(property: fullProperty),
+                  builder: (context) => PropertyDetailScreen(property: p),
                 ),
               );
             }
@@ -383,8 +284,8 @@ class OwnerDashboardScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           _buildStatusBadge(status, isDark),
-                          if (!isBooking && status == 'active') 
-                            _buildAvailabilityBadge(isAvailable!, isDark),
+                          if (!isBooking && status == 'approved') 
+                            _buildAvailabilityBadge(isAvailable ?? false, isDark),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -412,17 +313,19 @@ class OwnerDashboardScreen extends StatelessWidget {
     Color bg = isDark ? Colors.grey[800]! : Colors.grey[100]!;
     Color text = isDark ? Colors.grey[300]! : Colors.grey[600]!;
     
-    switch (status.toLowerCase()) {
-      case 'active': case 'confirmed': 
+    final s = status.toLowerCase();
+
+    switch (s) {
+      case 'active': case 'confirmed': case 'approved': case 'completed':
         bg = isDark ? const Color(0xFF1B5E20) : const Color(0xFFE8F5E9); 
         text = isDark ? const Color(0xFFA5D6A7) : const Color(0xFF2E7D32); 
         break;
       case 'pending': 
-        bg = isDark ? const Color(0xFFE65100).withValues(alpha: 0.2) : const Color(0xFFFFF3E0); 
+        bg = isDark ? const Color(0xFFE65100).withOpacity(0.2) : const Color(0xFFFFF3E0); 
         text = isDark ? const Color(0xFFFFCC80) : const Color(0xFFEF6C00); 
         break;
       case 'cancelled': case 'rejected': 
-        bg = isDark ? const Color(0xFFB71C1C).withValues(alpha: 0.2) : const Color(0xFFFFEBEE); 
+        bg = isDark ? const Color(0xFFB71C1C).withOpacity(0.2) : const Color(0xFFFFEBEE); 
         text = isDark ? const Color(0xFFEF9A9A) : const Color(0xFFC62828); 
         break;
     }
@@ -437,7 +340,7 @@ class OwnerDashboardScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isAvailable ? (isDark ? const Color(0xFF0D47A1).withValues(alpha: 0.3) : const Color(0xFFE3F2FD)) : (isDark ? Colors.grey[800] : Colors.grey[100]), 
+        color: isAvailable ? (isDark ? const Color(0xFF0D47A1).withOpacity(0.3) : const Color(0xFFE3F2FD)) : (isDark ? Colors.grey[800] : Colors.grey[100]), 
         borderRadius: BorderRadius.circular(20)
       ),
       child: Row(

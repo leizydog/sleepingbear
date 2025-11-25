@@ -14,10 +14,17 @@ class PropertyBase(BaseModel):
     image_url: Optional[str] = None
     images: Optional[List[str]] = [] 
     
-    # ✅ NEW: Payment Fields
+    # ✅ Payment Fields
     accepts_bpi: Optional[bool] = False
     accepts_gcash: Optional[bool] = False
     accepts_cash: Optional[bool] = False
+    
+    # ✅ Account Info
+    gcash_number: Optional[str] = None
+    bpi_number: Optional[str] = None
+    
+    # ✅ NEW: QR Image
+    gcash_qr_image_url: Optional[str] = None
 
 class PropertyCreate(PropertyBase):
     pass
@@ -31,6 +38,10 @@ class PropertyUpdate(PropertyBase):
     accepts_bpi: Optional[bool] = None
     accepts_gcash: Optional[bool] = None
     accepts_cash: Optional[bool] = None
+    # Update account numbers
+    gcash_number: Optional[str] = None
+    bpi_number: Optional[str] = None
+    gcash_qr_image_url: Optional[str] = None
 
 class PropertyResponse(PropertyBase):
     id: int

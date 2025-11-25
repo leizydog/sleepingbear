@@ -1,79 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../payments/payment_screen.dart';
+import '../../providers/booking_provider.dart';
+import '../../models/booking.dart';
+// We don't need the local Booking class anymore, we use the real one
 
-// --- LOCAL MODELS ---
-enum BookingStatus { pending, confirmed, cancelled, completed }
-
-class Booking {
-  final String id;
-  final String propertyName;
-  final String propertyLocation;
-  final DateTime startDate;
-  final DateTime endDate;
-  final double totalPrice;
-  final BookingStatus status;
-  final String? imageUrl;
-
-  Booking({
-    required this.id,
-    required this.propertyName,
-    required this.propertyLocation,
-    required this.startDate,
-    required this.endDate,
-    required this.totalPrice,
-    required this.status,
-    this.imageUrl,
-  });
-}
-
-class BookingListScreen extends StatelessWidget {
+class BookingListScreen extends StatefulWidget {
   final VoidCallback? onMenuTap;
   const BookingListScreen({super.key, this.onMenuTap});
 
   @override
+  State<BookingListScreen> createState() => _BookingListScreenState();
+}
+
+class _BookingListScreenState extends State<BookingListScreen> {
+  
+  @override
+  void initState() {
+    super.initState();
+    // ✅ Fetch real bookings when screen loads
+    Future.microtask(() => 
+      Provider.of<BookingProvider>(context, listen: false).fetchBookings()
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // ✅ CHECK DARK MODE
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    // Define Colors based on Mode
     final backgroundColor = isDark ? const Color(0xFF121212) : const Color(0xFFF8F9FA);
     final primaryColor = const Color(0xFF4A00E0);
     final textColor = isDark ? Colors.white : Colors.black87;
-
-    // MOCK DATA
-    final List<Booking> bookings = [
-      Booking(
-        id: 'BK-7829',
-        propertyName: 'Luxury Condo in BGC',
-        propertyLocation: 'Taguig, Metro Manila',
-        startDate: DateTime.now().add(const Duration(days: 2)),
-        endDate: DateTime.now().add(const Duration(days: 5)),
-        totalPrice: 15000,
-        status: BookingStatus.confirmed,
-        imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267',
-      ),
-      Booking(
-        id: 'BK-1102',
-        propertyName: 'Skyline Loft',
-        propertyLocation: 'Makati City',
-        startDate: DateTime.now().add(const Duration(days: 15)),
-        endDate: DateTime.now().add(const Duration(days: 20)),
-        totalPrice: 25000,
-        status: BookingStatus.pending,
-        imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688',
-      ),
-      Booking(
-        id: 'BK-9921',
-        propertyName: 'Cozy Studio Unit',
-        propertyLocation: 'Pasig City',
-        startDate: DateTime.now().subtract(const Duration(days: 10)),
-        endDate: DateTime.now().subtract(const Duration(days: 8)),
-        totalPrice: 8000,
-        status: BookingStatus.completed,
-        imageUrl: 'https://images.unsplash.com/photo-1600596542815-2495db9dc2c3',
-      ),
-    ];
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -83,26 +40,45 @@ class BookingListScreen extends StatelessWidget {
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.menu_rounded, color: textColor),
-          onPressed: onMenuTap,
+          onPressed: widget.onMenuTap,
         ),
         title: Text(
           'My Bookings',
           style: TextStyle(fontWeight: FontWeight.w900, color: textColor),
         ),
+        actions: [
+          // Refresh Button
+          IconButton(
+            icon: Icon(Icons.refresh, color: textColor),
+            onPressed: () => Provider.of<BookingProvider>(context, listen: false).fetchBookings(),
+          )
+        ],
       ),
-      body: bookings.isEmpty
-          ? _buildEmptyState(primaryColor, isDark)
-          : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
-              itemCount: bookings.length,
-              itemBuilder: (context, index) {
-                return BookingCard(
-                  booking: bookings[index],
-                  isDark: isDark,
-                  onTap: () => _showBookingDetails(context, bookings[index], isDark),
-                );
-              },
-            ),
+      // ✅ CONSUME PROVIDER DATA
+      body: Consumer<BookingProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return Center(child: CircularProgressIndicator(color: primaryColor));
+          }
+
+          if (provider.bookings.isEmpty) {
+            return _buildEmptyState(primaryColor, isDark);
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
+            itemCount: provider.bookings.length,
+            itemBuilder: (context, index) {
+              final booking = provider.bookings[index];
+              return BookingCard(
+                booking: booking,
+                isDark: isDark,
+                onTap: () => _showBookingDetails(context, booking, isDark),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -122,19 +98,20 @@ class BookingListScreen extends StatelessWidget {
     );
   }
 
-  // ===========================================================================
-  // ✨ AESTHETIC POP-UP DIALOG (Dark Mode Ready)
-  // ===========================================================================
   void _showBookingDetails(BuildContext context, Booking booking, bool isDark) {
     final currencyFormat = NumberFormat.currency(symbol: '₱', decimalDigits: 0);
     final dateFormat = DateFormat('MMM d, yyyy');
     final nights = booking.endDate.difference(booking.startDate).inDays;
 
-    // Dialog Colors
     final dialogBg = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final titleColor = isDark ? Colors.white : const Color(0xFF1F2937);
     final subTextColor = isDark ? Colors.grey[400] : Colors.grey[600];
     final priceBoxBg = isDark ? Colors.black26 : const Color(0xFFF8F9FA);
+    
+    // ✅ Extract Property Details safely
+    final propertyName = booking.property?.name ?? "Unknown Property";
+    final propertyLocation = booking.property?.address ?? "Unknown Location";
+    final imageUrl = booking.property?.imageUrl;
 
     showGeneralDialog(
       context: context,
@@ -163,8 +140,8 @@ class BookingListScreen extends StatelessWidget {
                         child: SizedBox(
                           height: 180,
                           width: double.infinity,
-                          child: booking.imageUrl != null
-                              ? Image.network(booking.imageUrl!, fit: BoxFit.cover)
+                          child: imageUrl != null
+                              ? Image.network(imageUrl, fit: BoxFit.cover)
                               : Container(color: Colors.grey[800], child: const Icon(Icons.apartment, size: 50, color: Colors.grey)),
                         ),
                       ),
@@ -178,7 +155,7 @@ class BookingListScreen extends StatelessWidget {
                               color: isDark ? Colors.black54 : Colors.white, 
                               shape: BoxShape.circle
                             ),
-                            child: const Icon(Icons.close, size: 20, color: Colors.white), // Always white/contrasting
+                            child: const Icon(Icons.close, size: 20, color: Colors.black),
                           ),
                         ),
                       ),
@@ -196,7 +173,7 @@ class BookingListScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          booking.propertyName,
+                          propertyName,
                           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: titleColor, height: 1.2),
                           textAlign: TextAlign.center,
                         ),
@@ -206,7 +183,7 @@ class BookingListScreen extends StatelessWidget {
                           children: [
                             Icon(Icons.location_on, size: 14, color: subTextColor),
                             const SizedBox(width: 4),
-                            Text(booking.propertyLocation, style: TextStyle(color: subTextColor, fontSize: 13)),
+                            Text(propertyLocation, style: TextStyle(color: subTextColor, fontSize: 13)),
                           ],
                         ),
                         
@@ -222,7 +199,6 @@ class BookingListScreen extends StatelessWidget {
                         
                         const SizedBox(height: 24),
                         
-                        // Price & Action
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -234,36 +210,23 @@ class BookingListScreen extends StatelessWidget {
                             children: [
                               Text('Total Price', style: TextStyle(fontWeight: FontWeight.bold, color: subTextColor)),
                               Text(
-                                currencyFormat.format(booking.totalPrice),
+                                currencyFormat.format(booking.totalAmount),
                                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: Color(0xFF4A00E0)),
                               ),
                             ],
                           ),
                         ),
 
-                        // Pay Button
-                        if (booking.status == BookingStatus.confirmed) ...[
+                        // ✅ FIX: Pay Button if booking exists but status is Pending/Unpaid
+                        // Note: Our new manual flow sets status to PENDING. 
+                        // If it's PENDING, we might show "Processing..." instead of "Pay".
+                        // If we want to allow re-payment for failed/cancelled:
+                        if (booking.status == BookingStatus.cancelled || booking.status == BookingStatus.pending) ...[
                           const SizedBox(height: 20),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => PaymentScreen(booking: booking as dynamic), 
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF4A00E0),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                              child: const Text('Proceed to Payment', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                            ),
-                          ),
+                          // Optional: Add Pay/Retry logic here if needed.
+                          // For pending manual payments, usually we wait.
+                          if (booking.status == BookingStatus.pending)
+                            const Center(child: Text("Payment under review", style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)))
                         ]
                       ],
                     ),
@@ -309,6 +272,10 @@ class BookingCard extends StatelessWidget {
     final textColor = isDark ? Colors.white : Colors.black87;
     final subTextColor = isDark ? Colors.grey[400] : Colors.grey;
 
+    final propertyName = booking.property?.name ?? "Unknown Property";
+    final propertyLocation = booking.property?.address ?? "Unknown Location";
+    final imageUrl = booking.property?.imageUrl;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -325,18 +292,16 @@ class BookingCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           child: Row(
             children: [
-              // Image
               ClipRRect(
                 borderRadius: const BorderRadius.horizontal(left: Radius.circular(20)),
                 child: SizedBox(
                   height: 100,
                   width: 100,
-                  child: booking.imageUrl != null
-                      ? Image.network(booking.imageUrl!, fit: BoxFit.cover)
-                      : Container(color: Colors.grey[800]),
+                  child: imageUrl != null
+                      ? Image.network(imageUrl, fit: BoxFit.cover)
+                      : Container(color: Colors.grey[800], child: const Icon(Icons.apartment, color: Colors.white)),
                 ),
               ),
-              // Info
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -352,14 +317,14 @@ class BookingCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        booking.propertyName,
+                        propertyName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        booking.propertyLocation,
+                        propertyLocation,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(color: subTextColor, fontSize: 12),
@@ -390,17 +355,18 @@ class _StatusBadge extends StatelessWidget {
     Color text;
     String label;
 
-    // Adjusted colors for Dark Mode to be less jarring (softer backgrounds)
     if (isDark) {
       switch (status) {
         case BookingStatus.confirmed:
-          bg = Colors.green.withOpacity(0.2); text = Colors.green.shade300; label = 'Confirmed'; break;
+          bg = Colors.green.withValues(alpha: 0.2); text = Colors.green.shade300; label = 'Confirmed'; break;
         case BookingStatus.pending:
-          bg = Colors.orange.withOpacity(0.2); text = Colors.orange.shade300; label = 'Pending'; break;
+          bg = Colors.orange.withValues(alpha: 0.2); text = Colors.orange.shade300; label = 'Pending'; break;
         case BookingStatus.cancelled:
-          bg = Colors.red.withOpacity(0.2); text = Colors.red.shade300; label = 'Cancelled'; break;
+          bg = Colors.red.withValues(alpha: 0.2); text = Colors.red.shade300; label = 'Cancelled'; break;
         case BookingStatus.completed:
-          bg = Colors.blue.withOpacity(0.2); text = Colors.blue.shade300; label = 'Completed'; break;
+          bg = Colors.blue.withValues(alpha: 0.2); text = Colors.blue.shade300; label = 'Completed'; break;
+        default:
+          bg = Colors.grey.withValues(alpha: 0.2); text = Colors.grey.shade300; label = 'Unknown';
       }
     } else {
       switch (status) {
@@ -412,6 +378,8 @@ class _StatusBadge extends StatelessWidget {
           bg = const Color(0xFFFFEBEE); text = const Color(0xFFC62828); label = 'Cancelled'; break;
         case BookingStatus.completed:
           bg = const Color(0xFFE3F2FD); text = const Color(0xFF1565C0); label = 'Completed'; break;
+        default:
+           bg = Colors.grey.shade200; text = Colors.grey.shade800; label = 'Unknown';
       }
     }
 
@@ -420,7 +388,7 @@ class _StatusBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: isDark ? Colors.transparent : Colors.white.withOpacity(0.5), width: 1),
+        border: Border.all(color: isDark ? Colors.transparent : Colors.white.withValues(alpha: 0.5), width: 1),
       ),
       child: Text(
         label,

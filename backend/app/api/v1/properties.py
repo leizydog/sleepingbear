@@ -33,6 +33,10 @@ def resolve_image_urls(prop, base_url: str):
             else:
                 resolved_images.append(img)
         prop.images = resolved_images
+
+    # 3. ✅ FIX: Handle GCash QR Code Image
+    if hasattr(prop, 'gcash_qr_image_url') and prop.gcash_qr_image_url and not prop.gcash_qr_image_url.startswith("http"):
+        prop.gcash_qr_image_url = f"{base_url}/{prop.gcash_qr_image_url}"
         
     return prop
 
@@ -41,7 +45,6 @@ def resolve_image_urls(prop, base_url: str):
 async def upload_property_images(files: List[UploadFile] = File(...)):
     """
     Upload images and return RELATIVE paths.
-    We do NOT store the IP address here anymore.
     """
     image_paths = []
     
@@ -59,8 +62,7 @@ async def upload_property_images(files: List[UploadFile] = File(...)):
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
-        # ✅ Store RELATIVE path (e.g., "static/uploads/abc.jpg")
-        # This ensures the link survives even if your Server IP changes.
+        # Store relative path
         image_paths.append(file_path)
         
     return {"images": image_paths}
@@ -68,7 +70,7 @@ async def upload_property_images(files: List[UploadFile] = File(...)):
 @router.post("/", response_model=schemas_property.PropertyResponse, status_code=status.HTTP_201_CREATED)
 def create_property(
     property_data: schemas_property.PropertyCreate,
-    request: Request, # ✅ Needed to return full URL in response
+    request: Request, 
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_role([models.UserRole.ADMIN, models.UserRole.OWNER, models.UserRole.TENANT]))
 ):
@@ -94,13 +96,27 @@ def create_property(
     db.commit()
     db.refresh(db_property)
     
-    # Return with resolved URLs so the app shows them immediately
     base_url = str(request.base_url).rstrip("/")
     return resolve_image_urls(db_property, base_url)
 
+# ✅ NEW: Get Properties Owned by Current User
+@router.get("/my-listings", response_model=List[schemas_property.PropertyResponse])
+def get_my_listings(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.get_current_user)
+):
+    properties = db.query(models.Property).filter(models.Property.owner_id == current_user.id).order_by(models.Property.created_at.desc()).all()
+    
+    base_url = str(request.base_url).rstrip("/")
+    for p in properties:
+        resolve_image_urls(p, base_url)
+        
+    return properties
+
 @router.get("/", response_model=schemas_property.PropertyListResponse)
 def get_properties(
-    request: Request, # ✅ Needed for dynamic IP resolution
+    request: Request, 
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100),
     search: Optional[str] = None,
@@ -135,7 +151,6 @@ def get_properties(
     offset = (page - 1) * per_page
     properties = query.order_by(models.Property.created_at.desc()).offset(offset).limit(per_page).all()
     
-    # ✅ Resolve URLs dynamically for every property in the list
     base_url = str(request.base_url).rstrip("/")
     for p in properties:
         resolve_image_urls(p, base_url)
@@ -145,14 +160,13 @@ def get_properties(
 @router.get("/{property_id}", response_model=schemas_property.PropertyResponse)
 def get_property(
     property_id: int, 
-    request: Request, # ✅ Needed for dynamic IP resolution
+    request: Request, 
     db: Session = Depends(get_db)
 ):
     property = db.query(models.Property).filter(models.Property.id == property_id).first()
     if not property:
         raise HTTPException(status_code=404, detail="Property not found")
     
-    # ✅ Resolve URL
     base_url = str(request.base_url).rstrip("/")
     return resolve_image_urls(property, base_url)
 
@@ -196,6 +210,7 @@ def update_property(
     db.commit()
     db.refresh(property)
     
+    # ✅ FIXED: Ensure URLs are resolved after update
     base_url = str(request.base_url).rstrip("/")
     return resolve_image_urls(property, base_url)
 

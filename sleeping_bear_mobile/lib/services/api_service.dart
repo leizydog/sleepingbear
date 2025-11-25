@@ -1,45 +1,36 @@
 import 'dart:convert';
+import 'dart:io'; 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart'; 
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sleeping_bear_mobile/models/booking.dart';
 import 'package:sleeping_bear_mobile/models/payment.dart';
 import 'package:sleeping_bear_mobile/models/property.dart';
-import 'package:sleeping_bear_mobile/models/payment_method.dart'; // Ensure you have this model
+import 'package:sleeping_bear_mobile/models/payment_method.dart';
 
 class ApiService {
   // --- CONNECTION SETTINGS ---
-  
-  // OPTION 1: If using Android Emulator
-  // static const String baseUrl = 'http://10.0.2.2:8000';
-  
-  // OPTION 2: If using iOS Simulator
-  // static const String baseUrl = 'http://127.0.0.1:8000';
-
-  // OPTION 3: If using a Physical Device (Your PC IP)
-  // Run 'ipconfig' (Windows) or 'ifconfig' (Mac) to find your IPv4 address.
-  static const String baseUrl = 'http://192.168.233.66:8000'; 
+  // Ensure this matches your setup (e.g. 192.168.x.x for physical device)
+  static const String baseUrl = 'http://192.168.102.147:8000'; 
 
   // ---------------------------
 
-  // Store token
   Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
   }
-  
-  // Get token
+
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('auth_token');
   }
-  
-  // Remove token
+
   Future<void> removeToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
   }
-  
-  // Get headers with auth
+
   Future<Map<String, String>> getHeaders() async {
     final token = await getToken();
     return {
@@ -47,6 +38,92 @@ class ApiService {
       if (token != null) 'Authorization': 'Bearer $token',
     };
   }
+
+  // --- NEW: UPLOAD IMAGES ---
+  Future<List<String>> uploadImages(List<XFile> images) async {
+    final uri = Uri.parse('$baseUrl/properties/upload');
+    final request = http.MultipartRequest('POST', uri);
+    
+    // Add headers (Auth optional based on your backend, but good practice)
+    final token = await getToken();
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+
+    // Add files
+    for (var image in images) {
+      request.files.add(await http.MultipartFile.fromPath(
+        'files', 
+        image.path
+      ));
+    }
+
+    try {
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return List<String>.from(data['images']);
+      } else {
+        throw Exception('Failed to upload images: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Image upload error: $e');
+    }
+  }
+
+  // --- NEW: CREATE PROPERTY ---
+  Future<void> createProperty(Map<String, dynamic> propertyData) async {
+    final headers = await getHeaders();
+    final response = await http.post(
+      Uri.parse('$baseUrl/properties/'),
+      headers: headers,
+      body: jsonEncode(propertyData),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception('Failed to create property: ${response.body}');
+    }
+  }
+
+  // --- ✅ NEW: UPLOAD PAYMENT RECEIPT (For Manual GCash Flow) ---
+  Future<void> submitPaymentReceipt({
+    required int bookingId,
+    required String paymentMethod,
+    required XFile image,
+  }) async {
+    final uri = Uri.parse('$baseUrl/payments/upload-receipt');
+    final request = http.MultipartRequest('POST', uri);
+    
+    final token = await getToken();
+    if (token != null) {
+      request.headers['Authorization'] = 'Bearer $token';
+    }
+
+    // Add text fields
+    request.fields['booking_id'] = bookingId.toString();
+    request.fields['payment_method'] = paymentMethod;
+
+    // Add file
+    request.files.add(await http.MultipartFile.fromPath(
+      'file', 
+      image.path
+    ));
+
+    try {
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to upload receipt: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Receipt upload error: $e');
+    }
+  }
+
+  // --- AUTH METHODS ---
   
   // Register user
   Future<Map<String, dynamic>> register({
@@ -97,7 +174,7 @@ class ApiService {
       await saveToken(data['access_token']);
       return data;
     } else {
-      throw Exception(jsonDecode(response.body)['detail']);
+      throw Exception('Login failed');
     }
   }
   
@@ -121,7 +198,9 @@ class ApiService {
     await removeToken();
   }
 
-  // Get properties with filters
+  // --- PROPERTY METHODS ---
+
+  // Get properties
   Future<List<Property>> getProperties({
     int page = 1,
     int perPage = 10,
@@ -170,6 +249,8 @@ class ApiService {
       throw Exception('Failed to load property');
     }
   }
+
+  // --- BOOKING METHODS ---
 
   // Check availability
   Future<Map<String, dynamic>> checkAvailability({
@@ -236,6 +317,21 @@ class ApiService {
     }
   }
 
+  // ✅ ADDED: Get Booking by ID (Needed for status checks)
+  Future<Booking> getBookingById(int id) async {
+    final headers = await getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/bookings/$id'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return Booking.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load booking details');
+    }
+  }
+
   // Cancel booking
   Future<void> cancelBooking(int bookingId) async {
     final headers = await getHeaders();
@@ -249,6 +345,8 @@ class ApiService {
       throw Exception(error['detail'] ?? 'Failed to cancel booking');
     }
   }
+
+  // --- PAYMENT METHODS ---
 
   // Get payment methods
   Future<List<PaymentMethod>> getPaymentMethods() async {
@@ -305,6 +403,37 @@ class ApiService {
     } else {
       final error = jsonDecode(response.body);
       throw Exception(error['detail'] ?? 'Failed to confirm payment');
+    }
+  }
+
+  Future<List<Property>> getMyListings() async {
+    final headers = await getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/properties/my-listings'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> propertiesJson = jsonDecode(response.body);
+      return propertiesJson.map((json) => Property.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load my listings');
+    }
+  }
+
+  // Get bookings received by the owner
+  Future<List<Booking>> getOwnerBookings() async {
+    final headers = await getHeaders();
+    final response = await http.get(
+      Uri.parse('$baseUrl/bookings/owner-bookings'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> bookingsJson = jsonDecode(response.body);
+      return bookingsJson.map((json) => Booking.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load owner bookings');
     }
   }
 

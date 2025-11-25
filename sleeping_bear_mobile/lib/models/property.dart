@@ -17,10 +17,15 @@ class Property {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  // ✅ NEW: Payment Methods (Required for BookingProvider)
+  // ✅ Payment Methods
   final bool acceptsBpi;
   final bool acceptsGcash;
   final bool acceptsCash;
+
+  // ✅ NEW: Account Numbers
+  final String? gcashNumber;
+  final String? bpiNumber;
+  final String? gcashQrImageUrl;
 
   Property({
     required this.id,
@@ -34,17 +39,19 @@ class Property {
     required this.isAvailable,
     this.imageUrl,
     
-    // ✅ Initialize existing custom fields
     this.images = const [],
     this.ownerId = 0, 
     this.status = 'active',
     required this.createdAt,
     required this.updatedAt,
 
-    // ✅ Initialize Payment Methods (Default to false)
     this.acceptsBpi = false,
     this.acceptsGcash = false,
     this.acceptsCash = false,
+    
+    this.gcashNumber,
+    this.bpiNumber,
+    this.gcashQrImageUrl,
   });
   
   factory Property.fromJson(Map<String, dynamic> json) {
@@ -53,7 +60,6 @@ class Property {
       name: json['name'],
       description: json['description'],
       address: json['address'],
-      // Handle potential int/double mismatch safely
       pricePerMonth: (json['price_per_month'] as num).toDouble(),
       bedrooms: json['bedrooms'],
       bathrooms: json['bathrooms'],
@@ -61,19 +67,23 @@ class Property {
       isAvailable: json['is_available'] ?? false,
       imageUrl: json['image_url'],
       
-      // ✅ Parse existing custom fields
       images: json['images'] != null ? List<String>.from(json['images']) : [],
       ownerId: json['owner_id'] ?? 0,
       status: json['status'] ?? 'active',
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: json['updated_at'] != null 
           ? DateTime.parse(json['updated_at']) 
-          : DateTime.parse(json['created_at']), // Fallback to created_at
+          : DateTime.parse(json['created_at']),
 
       // ✅ Parse Payment Methods
       acceptsBpi: json['accepts_bpi'] ?? false,
       acceptsGcash: json['accepts_gcash'] ?? false,
       acceptsCash: json['accepts_cash'] ?? false,
+      
+      // ✅ Parse Account Numbers
+      gcashNumber: json['gcash_number'],
+      bpiNumber: json['bpi_number'],
+      gcashQrImageUrl: json['gcash_qr_image_url'],
     );
   }
 }

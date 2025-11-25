@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/property.dart';
-// import '../../services/api_service.dart'; // Uncomment if you have this service
+import '../bookings/booking_create_screen.dart'; // ✅ Import Booking Screen
 
 class PropertyDetailScreen extends StatefulWidget {
   final Property property;
@@ -29,7 +29,6 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
     final cardColor = Theme.of(context).cardColor;
     final textColor = isDark ? Colors.white : Colors.black87;
     final subTextColor = isDark ? Colors.grey[400] : Colors.grey[600];
-    // Light violet needs to be much darker in dark mode to look good
     final lightViolet = isDark ? primaryColor.withValues(alpha: 0.2) : Colors.deepPurple.shade50;
 
     return Scaffold(
@@ -52,21 +51,6 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
                 onPressed: () => Navigator.pop(context),
               ),
             ),
-            actions: [
-              Container(
-                margin: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isDark ? Colors.black.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.8),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: Icon(Icons.favorite_border_rounded, size: 20, color: isDark ? Colors.white : Colors.black87),
-                  onPressed: () {
-                    // TODO: Implement wishlist
-                  },
-                ),
-              ),
-            ],
             flexibleSpace: FlexibleSpaceBar(
               background: widget.property.imageUrl != null
                   ? Image.network(
@@ -90,10 +74,9 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
           SliverToBoxAdapter(
             child: Container(
               decoration: BoxDecoration(
-                color: cardColor, // Adapts to dark mode
+                color: cardColor,
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
               ),
-              // Shift up to overlap the image slightly for a modern look
               transform: Matrix4.translationValues(0, -20, 0),
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -166,6 +149,41 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
 
                     const SizedBox(height: 24),
 
+                    // ✅ NEW: PHOTO GALLERY
+                    if (widget.property.images.isNotEmpty) ...[
+                      Text(
+                        'Gallery',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 100,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: widget.property.images.length,
+                          itemBuilder: (context, index) {
+                            return GestureDetector(
+                              onTap: () {
+                                // Optional: Open full screen image viewer
+                              },
+                              child: Container(
+                                width: 100,
+                                margin: const EdgeInsets.only(right: 12),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  image: DecorationImage(
+                                    image: NetworkImage(widget.property.images[index]),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+
                     // Stats Cards
                     Row(
                       children: [
@@ -192,6 +210,28 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
                             isDark, primaryColor, textColor
                           ),
                         ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // ✅ NEW: ACCEPTED PAYMENTS
+                    Text(
+                      'Accepted Payments',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      children: [
+                        if (widget.property.acceptsBpi) 
+                          _buildPaymentChip('BPI Transfer', const Color(0xFFB1000E), Colors.white),
+                        if (widget.property.acceptsGcash) 
+                          _buildPaymentChip('GCash', const Color(0xFF007DFE), Colors.white),
+                        if (widget.property.acceptsCash) 
+                          _buildPaymentChip('Cash', const Color(0xFF00C853), Colors.white),
+                        if (!widget.property.acceptsBpi && !widget.property.acceptsGcash && !widget.property.acceptsCash)
+                          Text("No payment methods specified", style: TextStyle(color: subTextColor, fontSize: 13)),
                       ],
                     ),
 
@@ -232,13 +272,86 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 80), // Space for bottom bar
                   ],
                 ),
               ),
             ),
           ),
         ],
+      ),
+      
+      // ✅ NEW: BOTTOM BOOKING BAR
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        decoration: BoxDecoration(
+          color: cardColor,
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.05),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            )
+          ],
+          border: Border(top: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[100]!)),
+        ),
+        child: SafeArea(
+          child: Row(
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Total Price',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: subTextColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    currencyFormat.format(widget.property.pricePerMonth),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              ElevatedButton(
+                onPressed: () {
+                  // Navigate to booking creation
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BookingCreateScreen(property: widget.property),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 4,
+                  shadowColor: primaryColor.withValues(alpha: 0.4),
+                ),
+                child: const Text(
+                  'Book Now',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -290,6 +403,20 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentChip(String label, Color color, Color textColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 12),
       ),
     );
   }

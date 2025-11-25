@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 
 // --- Contexts ---
 import { AuthProvider } from './context/AuthContext';
-// FIX: Import the named provider directly
 import { DarkModeProvider } from './context/ThemeContext'; 
 import PublicLayout from './components/templates/PublicLayout';
 
@@ -17,13 +16,15 @@ import ConfirmationPage from './pages/booking/ConfirmationPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import OwnerDashboard from './pages/owner/OwnerDashboard'; 
 import AddListingPage from './pages/owner/AddListingPage';
-
 import SettingsPage from './pages/settings/SettingsPage';
+
+// ✅ IMPORT THE PROPERTY DETAILS PAGE
+import PropertyDetailsPage from './pages/property/PropertyDetailsPage';
 
 // --- CSS ---
 import './index.css';
 
-// --- Placeholder Component ---
+// --- Placeholder Component (Keep for other routes if needed) ---
 const Placeholder = ({ title }) => (
   <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-800 transition-colors">
     <div className="text-center">
@@ -38,7 +39,6 @@ const Placeholder = ({ title }) => (
 function App() {
   return (
     <AuthProvider>
-      {/* FIX: Use the named provider here */}
       <DarkModeProvider>
         <Router>
           <Routes>
@@ -61,8 +61,8 @@ function App() {
             <Route path="/owner/dashboard" element={<OwnerDashboard />} />
             <Route path="/owner/add-listing" element={<AddListingPage />} />
 
-            {/* Placeholders */}
-            <Route path="/property/:id" element={<Placeholder title="Property Details" />} />
+            {/* ✅ FIX: Use the Real Page Component */}
+            <Route path="/property/:id" element={<PropertyDetailsPage />} />
 
             {/* 404 Catch-All */}
             <Route path="*" element={<Navigate to="/" replace />} />

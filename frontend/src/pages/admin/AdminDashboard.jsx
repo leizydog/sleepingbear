@@ -9,7 +9,8 @@ import {
   bookingAPI, 
   paymentsAPI, 
   reportsAPI,
-  authAPI 
+  authAPI,
+  auditAPI 
 } from '../../services/api';
 
 // --- UPDATED TOP BAR WITH DARK MODE ---
@@ -29,23 +30,18 @@ const LocalTopBar = ({ sidebarOpen, toggleNotifs, showNotifs, unreadCount, user 
   };
 
   return (
-    // ADDED: dark:bg-gray-900/80, dark:border-b dark:border-gray-800
     <div className={`fixed top-0 right-0 z-40 flex items-center justify-between px-8 py-4 bg-[#f4f2f6]/80 dark:bg-gray-900/80 backdrop-blur-md transition-all duration-300 ${sidebarOpen ? 'left-72' : 'left-20'}`}>
       <div>
-        {/* ADDED: dark:text-white */}
         <h1 className="text-2xl font-extrabold text-gray-800 dark:text-white">Dashboard</h1>
         <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Welcome back, {user?.full_name || 'Admin'}</p>
       </div>
       
       <div className="flex items-center gap-4">
-        {/* Search Bar - ADDED: dark:bg-gray-800 dark:border-gray-700 */}
         <div className="bg-white dark:bg-gray-800 flex items-center px-4 py-2.5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 w-64 hidden md:flex transition-colors">
           <Icon name="Search" size={18} className="text-gray-400" />
-          {/* ADDED: dark:text-gray-200 dark:placeholder-gray-500 */}
           <input type="text" placeholder="Search..." className="bg-transparent border-none outline-none text-sm ml-2 w-full placeholder-gray-400 text-gray-600 dark:text-gray-200 dark:placeholder-gray-500" />
         </div>
 
-        {/* Notifications - ADDED: dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 */}
         <div className="relative">
           <button onClick={toggleNotifs} className={`p-2.5 rounded-xl transition-all shadow-sm border border-gray-100 dark:border-gray-700 relative ${showNotifs ? 'bg-[#afa2ba] text-white' : 'bg-white text-gray-600 hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700'}`}>
             <Icon name="Bell" size={20} />
@@ -53,11 +49,9 @@ const LocalTopBar = ({ sidebarOpen, toggleNotifs, showNotifs, unreadCount, user 
           </button>
         </div>
 
-        {/* Profile Dropdown */}
         <div className="relative">
           <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center gap-3 pl-4 border-l border-gray-200 dark:border-gray-700 hover:opacity-80 transition-opacity">
             <div className="text-right hidden md:block">
-              {/* ADDED: dark:text-gray-200 */}
               <p className="text-sm font-bold text-gray-800 dark:text-gray-200 leading-none">{user?.full_name || 'Admin'}</p>
               <p className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase mt-1">{user?.role || 'Super Admin'}</p>
             </div>
@@ -70,12 +64,10 @@ const LocalTopBar = ({ sidebarOpen, toggleNotifs, showNotifs, unreadCount, user 
           {dropdownOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
-              {/* ADDED: dark:bg-gray-900 dark:border-gray-700 */}
               <div className="absolute right-0 top-14 w-56 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 animate-slide-up overflow-hidden">
                 <div className="p-2 border-b border-gray-50 dark:border-gray-800 space-y-1">
                   <p className="px-3 py-2 text-xs font-bold text-gray-400 uppercase">Account Management</p>
                   
-                  {/* ADDED: dark:text-gray-300 dark:hover:bg-gray-800 */}
                   <button onClick={() => handleNavigation('/settings')} className="w-full text-left px-3 py-2 text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-gray-800 rounded-lg flex items-center gap-2">
                     <Icon name="User" size={16} /> Manage Account
                   </button>
@@ -99,7 +91,7 @@ const LocalTopBar = ({ sidebarOpen, toggleNotifs, showNotifs, unreadCount, user 
   );
 };
 
-// --- MODAL WITH DARK MODE ---
+// --- ADD PROPERTY MODAL ---
 const AddPropertyModal = ({ onClose, onSave }) => {
   const [formData, setFormData] = useState({
     name: '', address: '', description: '', price_per_month: '', bedrooms: 1, bathrooms: 1, size_sqm: 0, images: [] 
@@ -159,14 +151,12 @@ const AddPropertyModal = ({ onClose, onSave }) => {
     }
   };
 
-  // Common Input Style - ADDED: dark:bg-gray-800 dark:border-gray-700 dark:text-white
   const inputStyle = "w-full border border-gray-300 rounded-xl py-3 px-4 outline-none focus:border-[#afa2ba] dark:bg-gray-800 dark:border-gray-700 dark:text-white transition-colors";
   const labelStyle = "block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2";
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 font-sans">
       <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
-      {/* ADDED: dark:bg-gray-900 dark:border-gray-700 */}
       <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-4xl relative z-10 overflow-hidden animate-slide-up border border-white/20 dark:border-gray-700 flex flex-col max-h-[90vh]">
         <div className="bg-[#afa2ba] dark:bg-gray-800 px-8 py-6 flex justify-between items-center flex-shrink-0 border-b dark:border-gray-700">
           <div><h3 className="text-2xl font-extrabold text-white tracking-wide">Add New Property</h3></div>
@@ -174,7 +164,6 @@ const AddPropertyModal = ({ onClose, onSave }) => {
         </div>
         <div className="p-8 overflow-y-auto custom-scrollbar space-y-8 flex-1">
            <div className="space-y-4">
-             {/* ADDED: dark:border-gray-700 dark:text-white */}
              <h4 className="font-bold text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2">Basic Information</h4>
              <div className="grid grid-cols-2 gap-6">
                 <div className="col-span-2"><label className={labelStyle}>Property Name</label><input name="name" onChange={handleChange} type="text" placeholder="e.g. SMDC Grass Residences Tower 4" className={inputStyle} /></div>
@@ -191,7 +180,6 @@ const AddPropertyModal = ({ onClose, onSave }) => {
                <h4 className="font-bold text-gray-800 dark:text-white">Property Images <span className="text-sm font-normal text-gray-500 dark:text-gray-400">(Min 3, Max 10)</span></h4>
                <span className={`text-xs font-bold ${formData.images.length < 3 ? 'text-red-500' : 'text-green-500'}`}>{formData.images.length} / 10 Added</span>
              </div>
-             {/* ADDED: dark:bg-gray-800 dark:border-gray-600 dark:hover:bg-gray-700 */}
              <div className="bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer relative">
                <input type="file" multiple accept="image/*" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
                <div className="flex flex-col items-center">
@@ -213,7 +201,6 @@ const AddPropertyModal = ({ onClose, onSave }) => {
              )}
            </div>
         </div>
-        {/* ADDED: dark:bg-gray-800 dark:border-gray-700 */}
         <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-4 flex-shrink-0">
           <button onClick={onClose} className="px-8 py-3 text-gray-500 dark:text-gray-400 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-sm">Cancel</button>
           <button disabled={uploading} onClick={handleSubmit} className={`px-10 py-3 text-white font-bold rounded-xl shadow-lg text-sm ${uploading ? 'bg-gray-400' : 'bg-[#afa2ba] hover:bg-[#9a8a9b] dark:bg-purple-600 dark:hover:bg-purple-700'}`}>
@@ -227,7 +214,6 @@ const AddPropertyModal = ({ onClose, onSave }) => {
 
 const NotificationDropdown = ({ notifications, isOpen, onClose }) => {
   if (!isOpen) return null;
-  // ADDED: dark:bg-gray-900 dark:border-gray-700
   return (
     <div className="absolute top-20 right-8 w-96 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 animate-slide-up overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800">
@@ -236,7 +222,6 @@ const NotificationDropdown = ({ notifications, isOpen, onClose }) => {
       </div>
       <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
         {notifications.length === 0 ? <div className="p-8 text-center text-gray-400 text-sm">No new notifications</div> : notifications.map((notif, index) => (
-          // ADDED: dark:border-gray-800 dark:hover:bg-gray-800
           <div key={index} className="px-6 py-4 border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer flex gap-4 relative group">
             <div className={`h-10 w-10 rounded-full flex items-center justify-center flex-shrink-0 ${notif.type === 'payment' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'}`}>
               <Icon name={notif.type === 'payment' ? 'CreditCard' : 'Calendar'} size={18} />
@@ -296,15 +281,83 @@ const AddUserModal = ({ type, userToEdit, onClose, onSave }) => {
   );
 };
 
+// ✅ Payment Review Modal with Receipt Viewer
+const PaymentReviewModal = ({ payment, onClose, onReview }) => {
+  if (!payment) return null;
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-700">
+        <div className="bg-purple-900 p-6 flex justify-between items-center">
+          <h3 className="text-xl font-bold text-white">Review Payment</h3>
+          <button onClick={onClose}><Icon name="X" className="text-white" /></button>
+        </div>
+        
+        <div className="p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-gray-500 dark:text-gray-400">Amount</p>
+              <p className="text-xl font-bold text-green-500">₱{payment.amount}</p>
+            </div>
+            <div>
+              <p className="text-gray-500 dark:text-gray-400">Method</p>
+              <p className="font-bold text-white uppercase">{payment.method}</p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-gray-500 dark:text-gray-400">Reference / Booking</p>
+              <p className="font-bold text-white">{payment.user} ({payment.condo})</p>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-700 pt-4">
+            <p className="text-gray-500 dark:text-gray-400 mb-2">Proof of Payment</p>
+            <div className="bg-gray-800 rounded-lg p-2 flex items-center justify-center min-h-[200px]">
+              {payment.proof ? (
+                <img src={payment.proof} alt="Receipt" className="max-h-[300px] rounded object-contain" />
+              ) : (
+                <p className="text-gray-500 italic">No receipt image uploaded</p>
+              )}
+            </div>
+            {payment.proof && (
+               <a href={payment.proof} target="_blank" rel="noreferrer" className="block text-center text-blue-400 text-xs mt-2 hover:underline">Open full image</a>
+            )}
+          </div>
+        </div>
+
+        <div className="p-6 border-t border-gray-700 flex gap-4">
+          <button 
+            onClick={() => onReview(payment.raw_id, 'reject')}
+            className="flex-1 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white py-3 rounded-xl font-bold transition-all border border-red-500/50"
+          >
+            Reject Payment
+          </button>
+          <button 
+            onClick={() => onReview(payment.raw_id, 'approve')}
+            className="flex-1 bg-green-500 text-white hover:bg-green-600 py-3 rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all"
+          >
+            Accept Payment
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AdminDashboard = () => {
   const [activePage, setActivePage] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  
+  // ✅ NEW: Audit Data State
+  const [auditLogs, setAuditLogs] = useState([]);
+  
   const [showNotifs, setShowNotifs] = useState(false);
   const { user } = useAuth();
   
   const [showAddPropertyModal, setShowAddPropertyModal] = useState(false);
   const [showUserModal, setShowUserModal] = useState({ open: false, type: null, user: null });
   const [previewImage, setPreviewImage] = useState(null);
+  
+  const [reviewPayment, setReviewPayment] = useState(null);
 
   const [stats, setStats] = useState(null);
   const [bookings, setBookings] = useState([]);
@@ -318,14 +371,15 @@ const AdminDashboard = () => {
   const refreshData = async () => {
       try {
           setLoading(true);
-          const [statsRes, bookingsRes, propsRes, ownersRes, tenantsRes, adminsRes, paymentsRes] = await Promise.all([
+          const [statsRes, bookingsRes, propsRes, ownersRes, tenantsRes, adminsRes, paymentsRes, auditRes] = await Promise.all([
               reportsAPI.getDashboardStats(),
               bookingAPI.getAll(),
               propertyAPI.getAll({ per_page: 100 }),
               authAPI.getAllUsers('owner'),
               authAPI.getAllUsers('tenant'),
               authAPI.getAllUsers('admin'),
-              paymentsAPI.getAll()
+              paymentsAPI.getAll(),
+              auditAPI.getLogs({ per_page: 50 }) // ✅ Fetch last 50 logs
           ]);
 
           setStats(statsRes);
@@ -342,11 +396,30 @@ const AdminDashboard = () => {
           setAdminData((adminsRes || []).map(mapUser));
 
           setPaymentsData((paymentsRes || []).map(p => ({
-             id: `PAY-${p.id}`, user: `User #${p.booking_id}`, condo: `Booking #${p.booking_id}`,
-             amount: `₱${p.amount.toLocaleString()}`, method: p.payment_method, proof: p.receipt_url, 
+             raw_id: p.id, 
+             id: `PAY-${p.id}`, 
+             user: `User #${p.booking_id}`, 
+             condo: `Booking #${p.booking_id}`,
+             amount: p.amount.toLocaleString(), 
+             method: p.payment_method, 
+             proof: p.receipt_url, 
              date: p.created_at ? new Date(p.created_at).toLocaleDateString() : 'N/A',
              status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1)) : 'Unknown'
           })));
+
+          // ✅ Map Audit Logs
+          if (auditRes) {
+            setAuditLogs(auditRes.map(log => ({
+              id: log.id,
+              user: log.username || `User #${log.user_id}` || 'System',
+              action: log.action.toUpperCase(),
+              description: log.description,
+              entity: log.entity_type ? `${log.entity_type} #${log.entity_id}` : '-',
+              ip: log.ip_address || 'N/A',
+              date: new Date(log.created_at).toLocaleString()
+            })));
+          }
+
       } catch (error) {
           console.error("Failed to load admin data:", error);
       } finally {
@@ -366,7 +439,19 @@ const AdminDashboard = () => {
     } catch (error) { console.error(error); alert("Failed to update property status."); }
   };
 
-  const handlePaymentAction = async (id, action) => { alert("Payment action logic not yet implemented on backend."); };
+  const handlePaymentReview = async (id, action) => {
+    if(!window.confirm(`Are you sure you want to ${action.toUpperCase()} this payment?`)) return;
+    try {
+        await paymentsAPI.review(id, action);
+        alert(`Payment ${action}ed successfully.`);
+        setReviewPayment(null);
+        refreshData();
+    } catch (error) {
+        console.error(error);
+        alert("Failed to update payment status.");
+    }
+  };
+
   const handleSaveUser = async (userData) => { setShowUserModal({ open: false, type: null, user: null }); };
   const handleDeleteUser = (id, type) => { if(!window.confirm("Remove user?")) return; alert("Delete user logic not yet implemented."); };
 
@@ -377,6 +462,22 @@ const AdminDashboard = () => {
     if (status === true) { label = 'Available'; color = 'text-green-600 bg-green-50 dark:bg-green-900/30 dark:text-green-400'; }
     if (status === false) { label = 'Booked'; color = 'text-red-600 bg-red-50 dark:bg-red-900/30 dark:text-red-400'; }
     return <span className={`px-2 py-1 rounded-full font-bold ${color} text-xs border border-current/10 uppercase`}>{String(label)}</span>;
+  };
+
+  // ✅ NEW: Audit Action Pill
+  const AuditActionPill = ({ action }) => {
+    let color = 'bg-gray-100 text-gray-600';
+    if (action === 'LOGIN' || action === 'LOGOUT') color = 'bg-blue-100 text-blue-600';
+    if (action === 'CREATE') color = 'bg-green-100 text-green-600';
+    if (action === 'UPDATE') color = 'bg-orange-100 text-orange-600';
+    if (action === 'DELETE') color = 'bg-red-100 text-red-600';
+    if (action === 'PAYMENT') color = 'bg-purple-100 text-purple-600';
+    
+    return (
+      <span className={`px-2 py-1 rounded text-[10px] font-bold ${color} border border-current/10`}>
+        {action}
+      </span>
+    );
   };
 
   const UserActionButtons = ({ row, type }) => (
@@ -420,11 +521,13 @@ const AdminDashboard = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-[#dcd3e2] dark:bg-gray-950 text-purple-800 dark:text-purple-400 font-bold">Loading Dashboard...</div>;
 
   return (
-    // ADDED: dark:bg-gray-950
     <div className="min-h-screen bg-[#dcd3e2] dark:bg-gray-950 font-sans relative transition-colors duration-300">
       {showAddPropertyModal && <AddPropertyModal onClose={() => setShowAddPropertyModal(false)} onSave={() => { setShowAddPropertyModal(false); refreshData(); }} />}
       {showUserModal.open && <AddUserModal type={showUserModal.type} userToEdit={showUserModal.user} onClose={() => setShowUserModal({ open: false })} onSave={handleSaveUser} />}
       {previewImage && <ImagePreviewModal src={previewImage} onClose={() => setPreviewImage(null)} />}
+      
+      {/* RENDER THE PAYMENT MODAL */}
+      {reviewPayment && <PaymentReviewModal payment={reviewPayment} onClose={() => setReviewPayment(null)} onReview={handlePaymentReview} />}
 
       <Sidebar 
         activePage={activePage} 
@@ -486,11 +589,47 @@ const AdminDashboard = () => {
 
           {activePage === 'owners' && <TableView title="Owners" data={ownersData} columns={[{ header: 'Name', accessor: 'name', className: 'p-4 font-bold dark:text-white' },{ header: 'Email', accessor: 'email', className: 'p-4 text-blue-600 dark:text-blue-400' },{ header: 'Actions', render: (row) => <UserActionButtons row={row} type="owners" />, className: 'p-4 text-center' }]} />}
           {activePage === 'tenants' && <TableView title="Tenants" data={tenantsData} columns={[{ header: 'Name', accessor: 'name', className: 'p-4 font-bold dark:text-white' },{ header: 'Email', accessor: 'email', className: 'p-4 text-blue-600 dark:text-blue-400' },{ header: 'Actions', render: (row) => <UserActionButtons row={row} type="tenants" />, className: 'p-4 text-center' }]} />}
+          
           {activePage === 'payments' && <TableView title="Payments" data={paymentsData} columns={[
-            { header: 'User', accessor: 'user', className: 'p-3 text-xs dark:text-gray-300' },{ header: 'Amount', accessor: 'amount', className: 'p-3 text-xs font-bold dark:text-white' },{ header: 'Status', render: (r)=><StatusPill status={r.status}/>, className: 'p-3 text-center' },
-            { header: 'Actions', render: (row) => <span className="text-xs text-gray-400">View</span>, className: 'p-3 text-center' }
+            { header: 'User', accessor: 'user', className: 'p-3 text-xs dark:text-gray-300' },
+            { header: 'Amount', accessor: 'amount', className: 'p-3 text-xs font-bold dark:text-white' },
+            { header: 'Method', accessor: 'method', className: 'p-3 text-xs uppercase dark:text-gray-400' },
+            { header: 'Status', render: (r)=><StatusPill status={r.status}/>, className: 'p-3 text-center' },
+            { header: 'Actions', render: (row) => (
+              row.status === 'Pending' ? (
+                <button 
+                  onClick={() => setReviewPayment(row)} 
+                  className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-3 py-1 rounded shadow font-bold transition-colors"
+                >
+                  Review
+                </button>
+              ) : (
+                <span className="text-xs text-gray-500">Done</span>
+              )
+            ), className: 'p-3 text-center' }
           ]} />}
+          
           {activePage === 'admins' && <AdminsTableView />}
+
+          {/* ✅ NEW: Audit Logs Page */}
+          {activePage === 'audit' && (
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-8 animate-fade-in relative min-h-[500px] transition-colors">
+              <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white mb-6">Audit Trail</h2>
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <DataTable 
+                  data={auditLogs} 
+                  columns={[
+                    { header: 'Date/Time', accessor: 'date', className: 'p-3 text-xs text-gray-500 whitespace-nowrap' },
+                    { header: 'User', accessor: 'user', className: 'p-3 text-sm font-bold text-gray-800 dark:text-white' },
+                    { header: 'Action', render: (r) => <AuditActionPill action={r.action} />, className: 'p-3 text-center' },
+                    { header: 'Entity', accessor: 'entity', className: 'p-3 text-xs font-mono text-gray-600 dark:text-gray-400' },
+                    { header: 'Description', accessor: 'description', className: 'p-3 text-sm text-gray-700 dark:text-gray-300' },
+                    { header: 'IP Address', accessor: 'ip', className: 'p-3 text-xs text-gray-400' },
+                  ]} 
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

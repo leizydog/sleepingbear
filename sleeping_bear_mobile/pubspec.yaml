@@ -15,12 +15,15 @@ dependencies:
   http: ^1.2.0
   shared_preferences: ^2.2.2 
   cupertino_icons: ^1.0.8
+  flutter_stripe: ^10.1.0  # <--- ADD THIS
+  qr_flutter: ^4.1.0  # <--- ADD THIS
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.13.1 # <--- NEW
+  
 
 flutter:
   uses-material-design: true

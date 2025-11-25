@@ -1,93 +1,102 @@
 import 'package:flutter/material.dart';
 import 'package:sleeping_bear_mobile/models/booking.dart';
-import 'package:sleeping_bear_mobile/models/property.dart';
+import 'package:sleeping_bear_mobile/services/api_service.dart';
 
 class BookingProvider with ChangeNotifier {
+  final ApiService _apiService = ApiService();
+  
   List<Booking> _bookings = [];
+  List<Booking> _ownerBookings = [];
   bool _isLoading = false;
+  String? _error;
 
   List<Booking> get bookings => _bookings;
+   List<Booking> get ownerBookings => _ownerBookings;
   bool get isLoading => _isLoading;
+  String? get error => _error;
 
   Future<void> fetchBookings() async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
-    // Simulate network delay
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      _bookings = await _apiService.getMyBookings();
+    } catch (e) {
+      _error = e.toString().replaceAll('Exception: ', '');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 
-    // DUMMY DATA
-    _bookings = [
-      Booking(
-        id: 1,
-        userId: 101,
-        propertyId: 201,
-        startDate: DateTime.now().add(const Duration(days: 2)),
-        endDate: DateTime.now().add(const Duration(days: 5)),
-        totalAmount: 4500.0,
-        status: BookingStatus.confirmed,
-        createdAt: DateTime.now(),
-        
-        // DUMMY PROPERTY 1
-        property: Property(
-          id: 201,
-          ownerId: 99,
-          name: 'Cozy Studio in Pasig',
-          description: 'A beautiful place to stay.',
-          address: 'Pasig City, Metro Manila',
-          pricePerMonth: 15000,
-          bedrooms: 1,
-          bathrooms: 1,
-          sizeSqm: 30,
-          status: 'available', 
-          imageUrl: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
+  // ✅ NEW: Check Status Method
+  Future<BookingStatus?> getBookingStatus(int id) async {
+    try {
+      final booking = await _apiService.getBookingById(id);
+      return booking.status;
+    } catch (e) {
+      print("Error checking status: $e");
+      return null;
+    }
+  }
 
-          // --- FIXED: ADDED MISSING BOOLEANS ---
-          // These prevent the "Null can't be assigned to bool" error
-          acceptsBpi: true,   
-          acceptsGcash: true,
-          acceptsCash: false,
-          isAvailable: true, 
-        ),
-      ),
-      Booking(
-        id: 2,
-        userId: 101,
-        propertyId: 202,
-        startDate: DateTime.now().add(const Duration(days: 10)),
-        endDate: DateTime.now().add(const Duration(days: 12)),
-        totalAmount: 12000.0,
-        status: BookingStatus.pending,
-        createdAt: DateTime.now(),
-        
-        // DUMMY PROPERTY 2
-        property: Property(
-          id: 202,
-          ownerId: 99,
-          name: 'Penthouse View',
-          description: 'Luxury living at its finest.',
-          address: 'Makati City, Metro Manila',
-          pricePerMonth: 45000,
-          bedrooms: 2,
-          bathrooms: 2,
-          sizeSqm: 85,
-          status: 'available',
-          imageUrl: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?ixlib=rb-4.0.3',
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-
-          // --- FIXED: ADDED MISSING BOOLEANS ---
-          acceptsBpi: true,
-          acceptsGcash: false,
-          acceptsCash: true,
-          isAvailable: true,
-        ),
-      ),
-    ];
-
-    _isLoading = false;
+  Future<Booking?> createBooking({
+    required int propertyId,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    _isLoading = true;
+    _error = null;
     notifyListeners();
+
+    try {
+      final newBooking = await _apiService.createBooking(
+        propertyId: propertyId,
+        startDate: startDate,
+        endDate: endDate,
+      );
+      
+      await fetchBookings();
+      
+      _isLoading = false;
+      notifyListeners();
+      
+      return newBooking;
+    } catch (e) {
+      _error = e.toString().replaceAll('Exception: ', '');
+      _isLoading = false;
+      notifyListeners();
+      return null;
+    }
+  }
+
+  
+ 
+
+  Future<void> fetchOwnerBookings() async {
+    _isLoading = true;
+    notifyListeners();
+    try {
+      _ownerBookings = await _apiService.getOwnerBookings();
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> cancelBooking(int id) async {
+    try {
+      await _apiService.cancelBooking(id);
+      _bookings.removeWhere((b) => b.id == id);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
+    }
   }
 }

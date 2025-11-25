@@ -12,8 +12,8 @@ const Sidebar = ({ activePage, setActivePage, isOpen, toggleSidebar }) => {
     { id: 'properties', label: 'Condominiums', icon: 'Home' },
     { id: 'payments', label: 'Payments', icon: 'CircleDollarSign' },
     { id: 'reports', label: 'Generate Reports', icon: 'TrendingUp' },
-    // Added Audit Trail
-    { id: 'audit_trail', label: 'Audit Trail', icon: 'ClipboardList' }, 
+    // Updated ID to match AdminDashboard logic
+    { id: 'audit', label: 'Audit Trail', icon: 'ClipboardList' }, 
   ];
 
   return (
@@ -22,7 +22,6 @@ const Sidebar = ({ activePage, setActivePage, isOpen, toggleSidebar }) => {
       {/* Header with Logo */}
       <div className={`p-4 flex items-center gap-3 mb-6 transition-all ${isOpen ? 'justify-start' : 'justify-center'}`}>
         
-        {/* REPLACED EMOJI WITH LOGO */}
         <img 
             src={logo} 
             alt="Sleeping Bear Logo" 
@@ -55,7 +54,7 @@ const Sidebar = ({ activePage, setActivePage, isOpen, toggleSidebar }) => {
               
               {isOpen && <span className="ml-4">{item.label}</span>}
               
-              {/* Tooltip for collapsed state (Optional UX improvement) */}
+              {/* Tooltip for collapsed state */}
               {!isOpen && (
                   <div className="absolute left-20 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50 shadow-lg">
                       {item.label}
