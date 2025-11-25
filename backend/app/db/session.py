@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # ✅ Updated connection URL using postgres superuser
-DATABASE_URL = "postgresql://postgres:NewPassword123@localhost/sleeping_bear_rental"
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:NewPassword123@localhost/sleeping_bear_rental")
 
 # Create SQLAlchemy engine
 engine = create_engine(DATABASE_URL)
