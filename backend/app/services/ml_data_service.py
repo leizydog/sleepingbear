@@ -1,184 +1,99 @@
 from sqlalchemy.orm import Session
 from app.models import all_models as models
-import pandas as pd
 from datetime import datetime
-from typing import List, Dict
+import pandas as pd
+import numpy as np
 
 class MLDataService:
-    
+
+    @staticmethod
+    def prepare_features_for_user(db: Session, user: models.User):
+        """
+        Maps real DB data to the Hotel Booking Dataset schema required by the Random Forest model.
+        """
+        # 1. Get the user's most recent booking to predict if they will retain NEXT time
+        last_booking = db.query(models.Booking).filter(
+            models.Booking.user_id == user.id
+        ).order_by(models.Booking.created_at.desc()).first()
+        
+        # If no booking history, we can't predict based on this specific model
+        if not last_booking:
+            return None 
+
+        # 2. Get historical counts
+        total_bookings_count = db.query(models.Booking).filter(models.Booking.user_id == user.id).count()
+        
+        # 3. Calculate Derived Features
+        
+        # Lead Time: Days between booking creation and check-in
+        lead_time = (last_booking.start_date - last_booking.created_at).days
+        lead_time = max(0, lead_time) # Ensure non-negative
+        
+        # Length of Stay
+        total_stay_nights = (last_booking.end_date - last_booking.start_date).days
+        total_stay_nights = max(1, total_stay_nights)
+        
+        # ADR (Average Daily Rate): Total Price / Nights
+        # Assuming last_booking.total_price exists. If not, estimate or use 0.
+        adr = 0.0
+        if hasattr(last_booking, 'total_price') and last_booking.total_price:
+            adr = float(last_booking.total_price) / total_stay_nights
+            
+        # Arrival Month (e.g., "August")
+        arrival_month = last_booking.start_date.strftime("%B")
+        
+        # 4. Construct the dictionary matching the TRAINED MODEL'S features exactly
+        # We fill missing "hotel-specific" fields with logical defaults for a condo system
+        feature_data = {
+            # --- Quantitative Features ---
+            'lead_time': lead_time,
+            'total_stay_nights': total_stay_nights,
+            'stays_in_weekend_nights': total_stay_nights // 3, # Approximation
+            'stays_in_week_nights': total_stay_nights - (total_stay_nights // 3),
+            'adults': 1, # Default to 1 if not tracked
+            'children': 0,
+            'babies': 0,
+            'is_repeated_guest': 1 if total_bookings_count > 1 else 0,
+            'previous_cancellations': 0, # Update if you track cancellations in DB
+            'previous_bookings_not_canceled': max(0, total_bookings_count - 1),
+            'booking_changes': 0, # Update if you track modifications
+            'adr': adr,
+            'total_of_special_requests': 0, # Update if you have a requests field
+            'required_car_parking_spaces': 0,
+            'days_in_waiting_list': 0,
+            
+            # --- Categorical Features (Strings) ---
+            'hotel': 'City Hotel', # Default mapping
+            'arrival_date_month': arrival_month,
+            'meal': 'SC', # Self Catering (common for condos)
+            'country': 'PHL', # Default to Philippines
+            'market_segment': 'Direct', # Since they use your app
+            'distribution_channel': 'Direct',
+            'reserved_room_type': 'A', # Dummy default
+            'assigned_room_type': 'A', # Dummy default
+            'deposit_type': 'No Deposit',
+            'customer_type': 'Transient',
+            'agent': 0,
+            'company': 0,
+        }
+        
+        return feature_data
+
     @staticmethod
     def collect_retention_features(db: Session) -> pd.DataFrame:
+        """
+        Batch collection for the 'predict-all' endpoint
+        """
         users = db.query(models.User).filter(
             models.User.role == models.UserRole.TENANT
         ).all()
         
         data = []
         for user in users:
-            bookings = db.query(models.Booking).filter(
-                models.Booking.user_id == user.id
-            ).all()
-            
-            if not bookings:
-                continue
-            
-            features = MLDataService._calculate_user_features(db, user, bookings)
-            data.append(features)
+            features = MLDataService.prepare_features_for_user(db, user)
+            if features:
+                # Add user_id to track who this row belongs to (removed before prediction)
+                features['user_id'] = user.id 
+                data.append(features)
         
-        df = pd.DataFrame(data)
-        return df
-    
-    @staticmethod
-    def _calculate_user_features(
-        db: Session,
-        user: models.User,
-        bookings: List[models.Booking]
-    ) -> Dict:
-        now = datetime.utcnow()
-        
-        # Basic user features
-        account_age_days = (now - user.created_at).days
-        
-        # Booking features
-        total_bookings = len(bookings)
-        confirmed_bookings = len([b for b in bookings if b.status == models.BookingStatus.CONFIRMED])
-        cancelled_bookings = len([b for b in bookings if b.status == models.BookingStatus.CANCELLED])
-        
-        # Payment features
-        payments = db.query(models.Payment).join(models.Booking).filter(
-            models.Booking.user_id == user.id
-        ).all()
-        
-        total_payments = len(payments)
-        completed_payments = len([p for p in payments if p.status == models.PaymentStatus.COMPLETED])
-        total_amount_paid = sum([p.amount for p in payments if p.status == models.PaymentStatus.COMPLETED])
-        
-        # Payment behavior
-        late_payments = 0
-        on_time_payments = 0
-        
-        for payment in payments:
-            if payment.status == models.PaymentStatus.COMPLETED and payment.paid_at:
-                booking = payment.booking
-                if payment.paid_at > booking.start_date:
-                    late_payments += 1
-                else:
-                    on_time_payments += 1
-        
-        late_payment_rate = (late_payments / total_payments) if total_payments > 0 else 0.0
-        
-        # Booking frequency
-        if len(bookings) > 1:
-            booking_dates = sorted([b.created_at for b in bookings])
-            intervals = [(booking_dates[i+1] - booking_dates[i]).days 
-                        for i in range(len(booking_dates)-1)]
-            avg_booking_interval = sum(intervals) / len(intervals) if intervals else 0
-        else:
-            avg_booking_interval = 0
-        
-        # Recency
-        last_booking = max(bookings, key=lambda b: b.created_at)
-        days_since_last_booking = (now - last_booking.created_at).days
-        
-        # Average booking length
-        avg_booking_length = sum([
-            (b.end_date - b.start_date).days for b in bookings
-        ]) / len(bookings) if bookings else 0
-        
-        # REMOVED: Feedback features calculation
-        
-        cancellation_rate = (cancelled_bookings / total_bookings) if total_bookings > 0 else 0.0
-        
-        # Target variable
-        retained = 1 if days_since_last_booking <= 90 else 0
-        
-        return {
-            'user_id': user.id,
-            'account_age_days': account_age_days,
-            'total_bookings': total_bookings,
-            'confirmed_bookings': confirmed_bookings,
-            'cancelled_bookings': cancelled_bookings,
-            'cancellation_rate': cancellation_rate,
-            'total_payments': total_payments,
-            'completed_payments': completed_payments,
-            'total_amount_paid': total_amount_paid,
-            'late_payments': late_payments,
-            'on_time_payments': on_time_payments,
-            'late_payment_rate': late_payment_rate,
-            'avg_booking_interval': avg_booking_interval,
-            'days_since_last_booking': days_since_last_booking,
-            'avg_booking_length': avg_booking_length,
-            # REMOVED: avg_rating, total_feedbacks
-            'retained': retained
-        }
-    
-    @staticmethod
-    def export_training_data(db: Session, filepath: str = 'training_data.csv'):
-        df = MLDataService.collect_retention_features(db)
-        df.to_csv(filepath, index=False)
-        return {
-            'success': True,
-            'filepath': filepath,
-            'records': len(df),
-            'features': list(df.columns)
-        }
-    
-    @staticmethod
-    def generate_synthetic_data(db: Session, num_records: int = 500):
-        import random
-        
-        data = []
-        
-        for i in range(num_records):
-            account_age_days = random.randint(30, 1095)
-            total_bookings = random.randint(1, 20)
-            
-            cancellation_rate = random.uniform(0, 0.5) if total_bookings > 3 else random.uniform(0, 0.8)
-            cancelled_bookings = int(total_bookings * cancellation_rate)
-            confirmed_bookings = total_bookings - cancelled_bookings
-            
-            total_payments = confirmed_bookings
-            completed_payments = int(total_payments * random.uniform(0.7, 1.0))
-            
-            late_payment_rate = random.uniform(0, 0.4)
-            late_payments = int(total_payments * late_payment_rate)
-            on_time_payments = total_payments - late_payments
-            
-            total_amount_paid = completed_payments * random.uniform(10000, 50000)
-            
-            avg_booking_interval = random.randint(30, 180) if total_bookings > 1 else 0
-            days_since_last_booking = random.randint(0, 365)
-            avg_booking_length = random.randint(7, 90)
-            
-            # REMOVED: Synthetic feedback data generation
-            
-            # Retention score calculation updated (removed rating factor)
-            retention_score = (
-                (1 - cancellation_rate) * 0.4 + # Increased weight
-                (1 - late_payment_rate) * 0.3 + # Increased weight
-                (1 - min(days_since_last_booking / 365, 1)) * 0.3
-            )
-            
-            retained = 1 if retention_score > 0.6 and random.random() > 0.2 else 0
-            
-            data.append ({
-                'user_id': f'synthetic_{i}',
-                'account_age_days': account_age_days,
-                'total_bookings': total_bookings,
-                'confirmed_bookings': confirmed_bookings,
-                'cancelled_bookings': cancelled_bookings,
-                'cancellation_rate': round(cancellation_rate, 3),
-                'total_payments': total_payments,
-                'completed_payments': completed_payments,
-                'total_amount_paid': round(total_amount_paid, 2),
-                'late_payments': late_payments,
-                'on_time_payments': on_time_payments,
-                'late_payment_rate': round(late_payment_rate, 3),
-                'avg_booking_interval': avg_booking_interval,
-                'days_since_last_booking': days_since_last_booking,
-                'avg_booking_length': avg_booking_length,
-                # REMOVED: avg_rating, total_feedbacks from export
-                'retained': retained
-            })
-        
-        df = pd.DataFrame(data)
-        return df
+        return pd.DataFrame(data)

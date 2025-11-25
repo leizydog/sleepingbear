@@ -4,6 +4,7 @@ import Sidebar from '../../components/organisms/Sidebar';
 import DataTable from '../../components/organisms/DataTable'; 
 import Icon from '../../components/atoms/Icon';
 import { useAuth } from '../../context/AuthContext';
+import RetentionAnalytics from './RetentionAnalytics';
 import { 
   propertyAPI, 
   bookingAPI, 
@@ -610,6 +611,7 @@ const AdminDashboard = () => {
           ]} />}
           
           {activePage === 'admins' && <AdminsTableView />}
+          {activePage === 'retention' && <RetentionAnalytics />}
 
           {/* ✅ NEW: Audit Logs Page */}
           {activePage === 'audit' && (
@@ -624,7 +626,7 @@ const AdminDashboard = () => {
                     { header: 'Action', render: (r) => <AuditActionPill action={r.action} />, className: 'p-3 text-center' },
                     { header: 'Entity', accessor: 'entity', className: 'p-3 text-xs font-mono text-gray-600 dark:text-gray-400' },
                     { header: 'Description', accessor: 'description', className: 'p-3 text-sm text-gray-700 dark:text-gray-300' },
-                    { header: 'IP Address', accessor: 'ip', className: 'p-3 text-xs text-gray-400' },
+                
                   ]} 
                 />
               </div>

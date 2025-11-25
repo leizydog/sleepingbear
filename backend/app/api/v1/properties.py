@@ -34,7 +34,7 @@ def resolve_image_urls(prop, base_url: str):
                 resolved_images.append(img)
         prop.images = resolved_images
 
-    # 3. ✅ FIX: Handle GCash QR Code Image
+    # 3. Handle GCash QR Code Image
     if hasattr(prop, 'gcash_qr_image_url') and prop.gcash_qr_image_url and not prop.gcash_qr_image_url.startswith("http"):
         prop.gcash_qr_image_url = f"{base_url}/{prop.gcash_qr_image_url}"
         
@@ -99,7 +99,7 @@ def create_property(
     base_url = str(request.base_url).rstrip("/")
     return resolve_image_urls(db_property, base_url)
 
-# ✅ NEW: Get Properties Owned by Current User
+# Get Properties Owned by Current User
 @router.get("/my-listings", response_model=List[schemas_property.PropertyResponse])
 def get_my_listings(
     request: Request,
@@ -129,10 +129,15 @@ def get_properties(
 ):
     query = db.query(models.Property)
     
+    # ✅ FIX: Default to APPROVED if no filter provided. Pass "all" to see everything.
+    if status_filter is None:
+        query = query.filter(models.Property.status == models.PropertyStatus.APPROVED)
+    elif status_filter.lower() != "all":
+        query = query.filter(models.Property.status == status_filter)
+
     if available_only:
         query = query.filter(models.Property.is_available == True)
-    if status_filter:
-        query = query.filter(models.Property.status == status_filter)
+    
     if search:
         search_term = f"%{search}%"
         query = query.filter(
@@ -210,7 +215,6 @@ def update_property(
     db.commit()
     db.refresh(property)
     
-    # ✅ FIXED: Ensure URLs are resolved after update
     base_url = str(request.base_url).rstrip("/")
     return resolve_image_urls(property, base_url)
 

@@ -6,7 +6,7 @@ from app.db.session import engine
 from app.models import all_models as models
 from app.api.v1 import (
     auth, properties, bookings, payments, reports, 
-    audit, notifications
+    audit, notifications, ml_predictions  
 )
 
 # Create tables
@@ -40,6 +40,7 @@ app.include_router(payments.router)
 app.include_router(reports.router)
 app.include_router(audit.router)
 app.include_router(notifications.router)
+app.include_router(ml_predictions.router)  # ← ADD THIS
 
 @app.get("/")
 def read_root():

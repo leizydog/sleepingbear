@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom'; // To read navigation state
 import { useAuth } from '../../context/AuthContext';
+import { propertyAPI } from '../../services/api'; // ✅ Import API
 import Header from '../../components/organisms/Header';
 import HomeSearchSection from '../../components/organisms/HomeSearchSection';
 import FeaturedListings from '../../components/organisms/FeaturedListings';
@@ -9,20 +10,53 @@ const HomePage = () => {
   const { user } = useAuth();
   const location = useLocation();
   
-  // Default Data
-  const allProperties = [
-    { id: 'PR-201', image: 'https://images.unsplash.com/photo-1567767292278-a4f21aa2d36e', location: '123 Pasig St., Pasig City', unitType: '2-Bedroom Condo', price: '₱25,000/month' },
-    { id: 'PR-202', image: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267', location: '456 BGC, Taguig City', unitType: 'Studio Unit', price: '₱20,000/month' },
-    { id: 'PRT001', image: 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688', location: 'BGC, Taguig', unitType: 'Studio', price: '₱18,000/month' },
-    { id: 'PRT002', image: 'https://images.unsplash.com/photo-1512918760383-eda2723ad13e', location: 'The Rise, Makati City', unitType: '1-Bedroom Condo', price: '₱12,000/month' },
-    { id: 'PRT004', image: 'https://images.unsplash.com/photo-1600596542815-2495db9dc2c3', location: 'Antipolo', unitType: '2-Bedroom', price: '₱10,000/month' },
-  ];
+  // ✅ STATE: Store properties from API
+  const [allProperties, setAllProperties] = useState([]); 
+  const [filteredProperties, setFilteredProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [filteredProperties, setFilteredProperties] = useState(allProperties);
+  // ✅ FETCH DATA ON MOUNT
+  useEffect(() => {
+    const fetchProperties = async () => {
+      try {
+        setLoading(true);
+        // ✅ CRITICAL FIX: Explicitly ask for 'approved' status only
+        const response = await propertyAPI.getAll({ 
+          status_filter: 'approved',
+          per_page: 100 // Fetch enough to show
+        });
+
+        // Handle pagination response structure (API returns { properties: [], total: ... })
+        const properties = response.properties || response || [];
+        
+        // Map API data to UI structure if necessary (ensure 'id', 'image', 'location' match)
+        // Assuming API returns: { id, image_url, name, address, price_per_month, ... }
+        const mappedProperties = properties.map(p => ({
+            id: p.id,
+            image: p.image_url || 'https://via.placeholder.com/400x300?text=No+Image',
+            location: p.address,
+            unitType: p.name, // Or p.description depending on your model
+            price: `₱${p.price_per_month?.toLocaleString()}/month`
+        }));
+
+        setAllProperties(mappedProperties);
+        setFilteredProperties(mappedProperties);
+      } catch (error) {
+        console.error("Failed to fetch properties:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, []);
 
   // Effect to apply filters when page loads or search changes
   const applyFilters = (filters) => {
-    if (!filters) return;
+    if (!filters) {
+        setFilteredProperties(allProperties);
+        return;
+    }
 
     const results = allProperties.filter(prop => {
       // Filter by Location (Case insensitive match)
@@ -39,10 +73,10 @@ const HomePage = () => {
 
   // Check if we came from Landing Page with filters
   useEffect(() => {
-    if (location.state && location.state.filters) {
+    if (location.state && location.state.filters && allProperties.length > 0) {
       applyFilters(location.state.filters);
     }
-  }, [location.state]);
+  }, [location.state, allProperties]);
 
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900">
@@ -54,11 +88,15 @@ const HomePage = () => {
         
         <div className="h-12"></div>
         
-        <FeaturedListings properties={filteredProperties} />
+        {loading ? (
+           <div className="text-center py-20 text-gray-500">Loading properties...</div>
+        ) : (
+           <FeaturedListings properties={filteredProperties} />
+        )}
         
-        {filteredProperties.length === 0 && (
+        {!loading && filteredProperties.length === 0 && (
           <div className="text-center text-gray-500 py-10">
-            No properties found matching your criteria. Try searching for "Pasig" or "BGC".
+            No properties found matching your criteria.
           </div>
         )}
       </main>

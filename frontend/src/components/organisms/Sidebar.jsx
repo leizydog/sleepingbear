@@ -11,9 +11,14 @@ const Sidebar = ({ activePage, setActivePage, isOpen, toggleSidebar }) => {
     { id: 'tenants', label: 'Tenants', icon: 'UserCheck' },
     { id: 'properties', label: 'Condominiums', icon: 'Home' },
     { id: 'payments', label: 'Payments', icon: 'CircleDollarSign' },
-    { id: 'reports', label: 'Generate Reports', icon: 'TrendingUp' },
     // Updated ID to match AdminDashboard logic
     { id: 'audit', label: 'Audit Trail', icon: 'ClipboardList' }, 
+    {
+    id: 'retention',
+    label: 'Retention Analytics',
+    icon: 'TrendingUp',
+    onClick: () => setActivePage('retention')
+  },
   ];
 
   return (

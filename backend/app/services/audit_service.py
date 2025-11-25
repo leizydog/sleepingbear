@@ -19,11 +19,12 @@ class AuditService:
     ):
         """Create an audit log entry"""
         
-        ip_address = None
+        # ✅ UPDATED: Stopped recording IP Address for privacy
+        ip_address = None 
         user_agent = None
         
         if request:
-            ip_address = request.client.host if request.client else None
+            # ip_address = request.client.host if request.client else None (REMOVED)
             user_agent = request.headers.get("user-agent")
         
         audit_log = models.AuditLog(
@@ -32,7 +33,7 @@ class AuditService:
             entity_type=entity_type,
             entity_id=entity_id,
             description=description,
-            ip_address=ip_address,
+            ip_address=ip_address, # Will now always be None
             user_agent=user_agent,
             metadata=json.dumps(metadata) if metadata else None
         )

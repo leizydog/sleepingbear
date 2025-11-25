@@ -12,7 +12,7 @@ import 'package:sleeping_bear_mobile/models/payment_method.dart';
 class ApiService {
   // --- CONNECTION SETTINGS ---
   // Ensure this matches your setup (e.g. 192.168.x.x for physical device)
-  static const String baseUrl = 'http://192.168.102.147:8000'; 
+  static const String baseUrl = 'http://192.168.102.190:8000'; 
 
   // ---------------------------
 

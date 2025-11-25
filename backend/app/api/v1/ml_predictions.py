@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from app.models import all_models as models
 from app.core import security as auth
 from app.db.session import get_db
-from services.ml_prediction_service import MLPredictionService
-from services.ml_data_service import MLDataService
+from app.services.ml_prediction_service import MLPredictionService
+from app.services.ml_data_service import MLDataService
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/ml-predictions", tags=["ML Predictions"])
@@ -25,7 +25,7 @@ class PredictionResponse(BaseModel):
     risk_score: int
     risk_level: str
     recommendation: str
-    features_used: dict
+    features_used: Dict[str, Any]
 
 @router.get("/model-info")
 def get_model_info(
@@ -33,35 +33,25 @@ def get_model_info(
 ):
     """Get information about the deployed model"""
     try:
-        return ml_service.get_model_info()
+        return ml_service.get_model_info() if hasattr(ml_service, 'get_model_info') else {"status": "active"}
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get model info: {str(e)}"
         )
 
-@router.get("/feature-importance")
-def get_feature_importance(
-    current_user: models.User = Depends(auth.require_role([models.UserRole.ADMIN]))
-):
-    """Get feature importance from the model"""
-    try:
-        return ml_service.get_feature_importance()
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get feature importance: {str(e)}"
-        )
-
 @router.post("/predict", response_model=PredictionResponse)
-def predict_retention(
-    request: PredictionRequest,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.require_role([models.UserRole.ADMIN, models.UserRole.OWNER]))
-):
+def predict_retention(self, raw_data: dict) -> dict:
     """
-    Predict retention for a specific user
+    Preprocesses raw DB data and generates a prediction.
     """
+    # ✅ ADD THIS DEBUG LOGGING
+    print(f"🔍 DEBUG: Starting prediction with data: {list(raw_data.keys())}")
+    
+    if not self.model or not self.label_encoders:
+        error_msg = "Model not loaded"
+        print(f"❌ ERROR: {error_msg}")
+        return {"error": error_msg, "risk_score": 0, "will_retain": True}
     try:
         # Get user
         user = db.query(models.User).filter(models.User.id == request.user_id).first()
@@ -77,26 +67,18 @@ def predict_retention(
                 detail="Can only predict retention for tenant users"
             )
         
-        # Get user's bookings
-        bookings = db.query(models.Booking).filter(
-            models.Booking.user_id == user.id
-        ).all()
+        # ✅ UPDATED: Call the new Data Service method
+        # This maps the DB data to the features required by your Random Forest model
+        features = MLDataService.prepare_features_for_user(db, user)
         
-        if not bookings:
+        if not features:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User has no booking history for prediction"
+                detail="Insufficient data: Tenant needs at least one booking history to generate a prediction."
             )
         
-        # Calculate features
-        features = MLDataService._calculate_user_features(db, user, bookings)
-        
-        # Remove user_id and target variable
-        features_for_prediction = {k: v for k, v in features.items() 
-                                   if k not in ['user_id', 'retained']}
-        
         # Make prediction
-        prediction = ml_service.predict_retention(features_for_prediction)
+        prediction = ml_service.predict_retention(features)
         
         return {
             'user_id': user.id,
@@ -107,16 +89,18 @@ def predict_retention(
             'risk_score': prediction['risk_score'],
             'risk_level': prediction['risk_level'],
             'recommendation': prediction['recommendation'],
-            'features_used': features_for_prediction
+            'features_used': features
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Prediction failed: {str(e)}"
-        )
+        print(f"❌ ERROR in predict_retention: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e), "risk_score": 0, "will_retain": True}
+
+# Replace your predict_all_tenants function in ml_predictions.py with this fixed version:
 
 @router.get("/predict-all")
 def predict_all_tenants(
@@ -129,7 +113,7 @@ def predict_all_tenants(
     Filter by risk level: 'high', 'medium', 'low'
     """
     try:
-        # Get all tenant users with bookings
+        # Get all tenant users
         tenants = db.query(models.User).filter(
             models.User.role == models.UserRole.TENANT
         ).all()
@@ -137,33 +121,52 @@ def predict_all_tenants(
         predictions = []
         
         for tenant in tenants:
-            bookings = db.query(models.Booking).filter(
-                models.Booking.user_id == tenant.id
-            ).all()
-            
-            if not bookings:
+            try:
+                # ✅ Calculate features using new method
+                features = MLDataService.prepare_features_for_user(db, tenant)
+                
+                # Skip users with insufficient data (no bookings)
+                if not features:
+                    continue
+                
+                # Make prediction
+                prediction = ml_service.predict_retention(features)
+                
+                # ✅ FIX: Check if prediction was successful
+                if not prediction or 'error' in prediction:
+                    error_msg = prediction.get('error', 'Unknown error') if prediction else 'No prediction returned'
+                    print(f"⚠️ Skipping tenant {tenant.id} ({tenant.username}): {error_msg}")
+                    continue
+                
+                # ✅ FIX: Ensure all required keys exist
+                if 'risk_level' not in prediction:
+                    print(f"⚠️ Skipping tenant {tenant.id}: Missing risk_level in prediction")
+                    continue
+                
+                # Add user info
+                prediction_result = {
+                    'user_id': tenant.id,
+                    'username': tenant.username,
+                    'email': tenant.email,
+                    'full_name': tenant.full_name,
+                    'will_retain': prediction.get('will_retain', True),
+                    'retention_probability': prediction.get('retention_probability', 0),
+                    'churn_probability': prediction.get('churn_probability', 0),
+                    'risk_score': prediction.get('risk_score', 0),
+                    'risk_level': prediction.get('risk_level', 'Low'),
+                    'recommendation': prediction.get('recommendation', 'No recommendation available')
+                }
+                
+                # Filter by risk level if specified (case-insensitive)
+                if risk_level is None or prediction_result['risk_level'].lower() == risk_level.lower():
+                    predictions.append(prediction_result)
+                    
+            except Exception as e:
+                # ✅ FIX: Catch individual tenant errors, don't fail entire request
+                print(f"⚠️ Error predicting for tenant {tenant.id}: {str(e)}")
+                import traceback
+                traceback.print_exc()
                 continue
-            
-            # Calculate features
-            features = MLDataService._calculate_user_features(db, tenant, bookings)
-            features_for_prediction = {k: v for k, v in features.items() 
-                                      if k not in ['user_id', 'retained']}
-            
-            # Make prediction
-            prediction = ml_service.predict_retention(features_for_prediction)
-            
-            # Add user info
-            prediction_result = {
-                'user_id': tenant.id,
-                'username': tenant.username,
-                'email': tenant.email,
-                'full_name': tenant.full_name,
-                **prediction
-            }
-            
-            # Filter by risk level if specified
-            if risk_level is None or prediction['risk_level'] == risk_level:
-                predictions.append(prediction_result)
         
         # Sort by risk score (highest first)
         predictions.sort(key=lambda x: x['risk_score'], reverse=True)
@@ -175,6 +178,8 @@ def predict_all_tenants(
         }
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Batch prediction failed: {str(e)}"
@@ -203,8 +208,8 @@ def get_at_risk_tenants(
             'total_tenants': result['total_tenants'],
             'at_risk_tenants': at_risk,
             'summary': {
-                'high_risk': len([p for p in at_risk if p['risk_level'] == 'high']),
-                'medium_risk': len([p for p in at_risk if p['risk_level'] == 'medium']),
+                'high_risk': len([p for p in at_risk if p['risk_level'].lower() == 'high']),
+                'medium_risk': len([p for p in at_risk if p['risk_level'].lower() == 'medium']),
             }
         }
         
@@ -228,42 +233,71 @@ def get_retention_statistics(
         
         if not predictions:
             return {
-                'message': 'No tenant data available for statistics'
+                'message': 'No tenant data available for statistics',
+                'total_tenants': 0,
+                'risk_distribution': {
+                    'high_risk': {'count': 0, 'percentage': 0}, 
+                    'medium_risk': {'count': 0, 'percentage': 0}, 
+                    'low_risk': {'count': 0, 'percentage': 0}
+                },
+                'averages': {'risk_score': 0, 'retention_probability': 0},
+                'predicted_to_churn': 0,
+                'predicted_to_retain': 0
             }
         
         total = len(predictions)
-        high_risk = len([p for p in predictions if p['risk_level'] == 'high'])
-        medium_risk = len([p for p in predictions if p['risk_level'] == 'medium'])
-        low_risk = len([p for p in predictions if p['risk_level'] == 'low'])
+        high_risk = len([p for p in predictions if p.get('risk_level', '').lower() == 'high'])
+        medium_risk = len([p for p in predictions if p.get('risk_level', '').lower() == 'medium'])
+        low_risk = len([p for p in predictions if p.get('risk_level', '').lower() == 'low'])
         
-        avg_risk_score = sum(p['risk_score'] for p in predictions) / total
-        avg_retention_prob = sum(p['retention_probability'] or 0 for p in predictions) / total
+        # ✅ FIX: Safely handle risk_score and retention_probability
+        total_risk_score = 0
+        total_retention_prob = 0
+        valid_predictions = 0
+        
+        for p in predictions:
+            # Safely get risk_score with default
+            risk_score = p.get('risk_score', 0)
+            if risk_score is not None:
+                total_risk_score += risk_score
+                valid_predictions += 1
+            
+            # Safely get retention_probability with default
+            retention_prob = p.get('retention_probability', 0)
+            if retention_prob is not None:
+                total_retention_prob += retention_prob
+        
+        # Avoid division by zero
+        avg_risk_score = total_risk_score / valid_predictions if valid_predictions > 0 else 0
+        avg_retention_prob = total_retention_prob / total if total > 0 else 0
         
         return {
             'total_tenants': total,
             'risk_distribution': {
                 'high_risk': {
                     'count': high_risk,
-                    'percentage': round(high_risk / total * 100, 1)
+                    'percentage': round(high_risk / total * 100, 1) if total > 0 else 0
                 },
                 'medium_risk': {
                     'count': medium_risk,
-                    'percentage': round(medium_risk / total * 100, 1)
+                    'percentage': round(medium_risk / total * 100, 1) if total > 0 else 0
                 },
                 'low_risk': {
                     'count': low_risk,
-                    'percentage': round(low_risk / total * 100, 1)
+                    'percentage': round(low_risk / total * 100, 1) if total > 0 else 0
                 }
             },
             'averages': {
                 'risk_score': round(avg_risk_score, 2),
                 'retention_probability': round(avg_retention_prob, 4)
             },
-            'predicted_to_churn': len([p for p in predictions if not p['will_retain']]),
-            'predicted_to_retain': len([p for p in predictions if p['will_retain']])
+            'predicted_to_churn': len([p for p in predictions if not p.get('will_retain', True)]),
+            'predicted_to_retain': len([p for p in predictions if p.get('will_retain', True)])
         }
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()  # This will print the full error to your backend logs
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get retention statistics: {str(e)}"

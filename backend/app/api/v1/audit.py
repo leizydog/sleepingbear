@@ -17,7 +17,7 @@ class AuditLogResponse(BaseModel):
     entity_type: Optional[str]
     entity_id: Optional[int]
     description: str
-    ip_address: Optional[str]
+    # ip_address: Optional[str]  <-- REMOVED
     created_at: datetime
     
     class Config:
@@ -71,7 +71,7 @@ def get_audit_logs(
             "entity_type": log.entity_type,
             "entity_id": log.entity_id,
             "description": log.description,
-            "ip_address": log.ip_address,
+            # "ip_address": log.ip_address, <-- REMOVED
             "created_at": log.created_at,
         })
     

@@ -101,4 +101,26 @@ export const auditAPI = {
   getUserActivity: async (userId) => (await api.get(`/audit/user/${userId}`)).data,
 };
 
+export const mlAPI = {
+  // Get model information
+  getModelInfo: async () => (await api.get('/ml-predictions/model-info')).data,
+  
+  // Predict retention for a specific user
+  predictUser: async (userId) => (await api.post('/ml-predictions/predict', { user_id: userId })).data,
+  
+  // Get predictions for all tenants
+  predictAll: async (riskLevel = null) => {
+    const params = riskLevel ? { risk_level: riskLevel } : {};
+    return (await api.get('/ml-predictions/predict-all', { params })).data;
+  },
+  
+  // Get at-risk tenants above threshold
+  getAtRiskTenants: async (threshold = 70) => (await api.get('/ml-predictions/at-risk-tenants', { 
+    params: { threshold } 
+  })).data,
+  
+  // Get overall retention statistics
+  getRetentionStats: async () => (await api.get('/ml-predictions/retention-stats')).data,
+};
+
 export default api;
