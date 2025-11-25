@@ -17,7 +17,7 @@ class ApiService {
 
   // OPTION 3: If using a Physical Device (Your PC IP)
   // Run 'ipconfig' (Windows) or 'ifconfig' (Mac) to find your IPv4 address.
-  static const String baseUrl = 'http://192.168.1.11:8000'; 
+  static const String baseUrl = 'http://192.168.233.66:8000'; 
 
   // ---------------------------
 

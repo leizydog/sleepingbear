@@ -9,8 +9,19 @@ class Property {
   final double sizeSqm;
   final bool isAvailable;
   final String? imageUrl;
-  final DateTime createdAt;
   
+  // ✅ Existing Custom Fields
+  final List<String> images;
+  final int ownerId;
+  final String status;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  // ✅ NEW: Payment Methods (Required for BookingProvider)
+  final bool acceptsBpi;
+  final bool acceptsGcash;
+  final bool acceptsCash;
+
   Property({
     required this.id,
     required this.name,
@@ -22,7 +33,18 @@ class Property {
     required this.sizeSqm,
     required this.isAvailable,
     this.imageUrl,
+    
+    // ✅ Initialize existing custom fields
+    this.images = const [],
+    this.ownerId = 0, 
+    this.status = 'active',
     required this.createdAt,
+    required this.updatedAt,
+
+    // ✅ Initialize Payment Methods (Default to false)
+    this.acceptsBpi = false,
+    this.acceptsGcash = false,
+    this.acceptsCash = false,
   });
   
   factory Property.fromJson(Map<String, dynamic> json) {
@@ -31,13 +53,27 @@ class Property {
       name: json['name'],
       description: json['description'],
       address: json['address'],
-      pricePerMonth: json['price_per_month'].toDouble(),
+      // Handle potential int/double mismatch safely
+      pricePerMonth: (json['price_per_month'] as num).toDouble(),
       bedrooms: json['bedrooms'],
       bathrooms: json['bathrooms'],
-      sizeSqm: json['size_sqm'].toDouble(),
-      isAvailable: json['is_available'],
+      sizeSqm: (json['size_sqm'] as num).toDouble(),
+      isAvailable: json['is_available'] ?? false,
       imageUrl: json['image_url'],
+      
+      // ✅ Parse existing custom fields
+      images: json['images'] != null ? List<String>.from(json['images']) : [],
+      ownerId: json['owner_id'] ?? 0,
+      status: json['status'] ?? 'active',
       createdAt: DateTime.parse(json['created_at']),
+      updatedAt: json['updated_at'] != null 
+          ? DateTime.parse(json['updated_at']) 
+          : DateTime.parse(json['created_at']), // Fallback to created_at
+
+      // ✅ Parse Payment Methods
+      acceptsBpi: json['accepts_bpi'] ?? false,
+      acceptsGcash: json['accepts_gcash'] ?? false,
+      acceptsCash: json['accepts_cash'] ?? false,
     );
   }
 }

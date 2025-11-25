@@ -1,37 +1,72 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:http/http.dart' as http;
-
 import '../../models/property.dart';
-import '../../services/api_service.dart';
-import '../bookings/booking_create_screen.dart';
+// import '../../services/api_service.dart'; // Uncomment if you have this service
 
 class PropertyDetailScreen extends StatefulWidget {
   final Property property;
-  
-  final dynamic propertyId;
-  
-const PropertyDetailScreen({super.key, required this.propertyId, required this.property});
+  final dynamic propertyId; 
+
+  const PropertyDetailScreen({
+    super.key,
+    this.propertyId, 
+    required this.property,
+  });
 
   @override
   State<PropertyDetailScreen> createState() => _PropertyDetailScreenState();
 }
 
 class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
-  final ApiService _apiService = ApiService();
-
   @override
   Widget build(BuildContext context) {
-    final currencyFormat =
-        NumberFormat.currency(symbol: '₱', decimalDigits: 0);
+    final currencyFormat = NumberFormat.currency(symbol: '₱', decimalDigits: 0);
+    
+    // ✅ DARK MODE VARIABLES
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final cardColor = Theme.of(context).cardColor;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final subTextColor = isDark ? Colors.grey[400] : Colors.grey[600];
+    // Light violet needs to be much darker in dark mode to look good
+    final lightViolet = isDark ? primaryColor.withValues(alpha: 0.2) : Colors.deepPurple.shade50;
 
     return Scaffold(
+      backgroundColor: backgroundColor,
       body: CustomScrollView(
         slivers: [
+          // --- 1. HERO IMAGE HEADER ---
           SliverAppBar(
-            expandedHeight: 300,
+            expandedHeight: 320,
             pinned: true,
+            backgroundColor: primaryColor,
+            leading: Container(
+              margin: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.black.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.8),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: isDark ? Colors.white : Colors.black87),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+            actions: [
+              Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.black.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.8),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.favorite_border_rounded, size: 20, color: isDark ? Colors.white : Colors.black87),
+                  onPressed: () {
+                    // TODO: Implement wishlist
+                  },
+                ),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: widget.property.imageUrl != null
                   ? Image.network(
@@ -39,337 +74,223 @@ class _PropertyDetailScreenState extends State<PropertyDetailScreen> {
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.home,
-                              size: 100, color: Colors.grey),
+                          color: isDark ? Colors.grey[800] : Colors.grey[200],
+                          child: Icon(Icons.image_not_supported, size: 60, color: Colors.grey[400]),
                         );
                       },
                     )
                   : Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.home,
-                          size: 100, color: Colors.grey),
+                      color: isDark ? Colors.grey[800] : Colors.grey[200],
+                      child: Icon(Icons.apartment, size: 60, color: Colors.grey[400]),
                     ),
             ),
           ),
 
+          // --- 2. CONTENT BODY ---
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.property.name,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  Text(
-                    '${currencyFormat.format(widget.property.pricePerMonth)} per month',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, color: Colors.red),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          widget.property.address,
-                          style: const TextStyle(fontSize: 16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: cardColor, // Adapts to dark mode
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+              ),
+              // Shift up to overlap the image slightly for a modern look
+              transform: Matrix4.translationValues(0, -20, 0),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Handle Bar
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 20),
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.grey[700] : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildInfoCard(
-                          Icons.bed,
-                          'Bedrooms',
-                          widget.property.bedrooms.toString(),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildInfoCard(
-                          Icons.bathroom,
-                          'Bathrooms',
-                          widget.property.bathrooms.toString(),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildInfoCard(
-                          Icons.square_foot,
-                          'Size',
-                          '${widget.property.sizeSqm.toInt()} sqm',
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  const Text(
-                    'Description',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
                     ),
-                  ),
-                  const SizedBox(height: 12),
 
-                  Text(
-                    widget.property.description ??
-                        'No description available.',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      height: 1.5,
-                      color: Colors.black87,
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  const Text(
-                    'Amenities',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: [
-                      _buildAmenityChip(Icons.wifi, 'WiFi'),
-                      _buildAmenityChip(Icons.local_parking, 'Parking'),
-                      _buildAmenityChip(Icons.security, '24/7 Security'),
-                      _buildAmenityChip(Icons.water_drop, 'Water Supply'),
-                      _buildAmenityChip(Icons.elevator, 'Elevator'),
-                    ],
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // ⭐⭐⭐ FIXED: Ratings & Reviews Section
-                  FutureBuilder<Map<String, dynamic>>(
-                    future: _fetchFeedbackStats(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        final stats = snapshot.data!;
-                        final avgRating =
-                            (stats['average_rating'] as num?)?.toDouble() ?? 0.0;
-                        final totalFeedbacks =
-                            stats['total_feedbacks'] as int? ?? 0;
-
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'Ratings & Reviews',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () {},
-                                  child: const Text('View All'),
-                                ),
-                              ],
+                    // Title & Price
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            widget.property.name,
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
                             ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Text(
-                                  avgRating.toStringAsFixed(1),
-                                  style: const TextStyle(
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children:
-                                          List.generate(5, (index) {
-                                        return Icon(
-                                          index < avgRating.floor()
-                                              ? Icons.star
-                                              : Icons.star_border,
-                                          color: Colors.amber,
-                                          size: 20,
-                                        );
-                                      }),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      '$totalFeedbacks reviews',
-                                      style: TextStyle(
-                                          color: Colors.grey[600]),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                          ),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              currencyFormat.format(widget.property.pricePerMonth),
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                color: primaryColor,
+                              ),
+                            ),
+                            Text(
+                              '/ month',
+                              style: TextStyle(fontSize: 14, color: subTextColor),
                             ),
                           ],
-                        );
-                      }
-                      return const SizedBox();
-                    },
-                  ),
+                        ),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 16),
 
-                  const SizedBox(height: 100),
-                ],
+                    // Location
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_rounded, color: Colors.grey[400], size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            widget.property.address,
+                            style: TextStyle(fontSize: 16, color: subTextColor),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Stats Cards
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInfoCard(
+                            Icons.bed_rounded,
+                            '${widget.property.bedrooms} Beds',
+                            isDark, primaryColor, textColor
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildInfoCard(
+                            Icons.bathtub_rounded,
+                            '${widget.property.bathrooms} Baths',
+                            isDark, primaryColor, textColor
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildInfoCard(
+                            Icons.square_foot_rounded,
+                            '${widget.property.sizeSqm.toInt()} m²',
+                            isDark, primaryColor, textColor
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Description
+                    Text(
+                      'Description',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      widget.property.description ?? 'No description provided.',
+                      style: TextStyle(
+                        fontSize: 15,
+                        height: 1.6,
+                        color: subTextColor,
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Amenities
+                    Text(
+                      'Amenities',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      children: [
+                        _buildAmenityChip(Icons.wifi_rounded, 'Free WiFi', lightViolet, primaryColor),
+                        _buildAmenityChip(Icons.pool_rounded, 'Swimming Pool', lightViolet, primaryColor),
+                        _buildAmenityChip(Icons.local_parking_rounded, 'Parking', lightViolet, primaryColor),
+                        _buildAmenityChip(Icons.fitness_center_rounded, 'Gym', lightViolet, primaryColor),
+                        _buildAmenityChip(Icons.security_rounded, '24/7 Security', lightViolet, primaryColor),
+                      ],
+                    ),
+
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
           ),
         ],
       ),
-
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: ElevatedButton(
-            onPressed: widget.property.isAvailable
-                ? () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => BookingCreateScreen(
-                            property: widget.property),
-                      ),
-                    );
-                  }
-                : null,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text(
-              widget.property.isAvailable
-                  ? 'Book Now'
-                  : 'Not Available',
-              style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-      ),
     );
   }
 
-  // ⭐⭐⭐ Info Card
-  Widget _buildInfoCard(IconData icon, String label, String value) {
+  Widget _buildInfoCard(IconData icon, String value, bool isDark, Color primaryColor, Color textColor) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(12),
+        color: isDark ? Colors.grey[800] : Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey.shade100),
       ),
       child: Column(
         children: [
-          Icon(icon, size: 32, color: Colors.blue[700]),
+          Icon(icon, size: 28, color: primaryColor),
           const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 18,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
               fontWeight: FontWeight.bold,
+              color: textColor,
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style:
-                TextStyle(fontSize: 12, color: Colors.grey[600]),
           ),
         ],
       ),
     );
   }
 
-  // ⭐⭐⭐ Amenity Chip
-  Widget _buildAmenityChip(IconData icon, String label) {
+  Widget _buildAmenityChip(IconData icon, String label, Color bgColor, Color iconColor) {
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey[300]!),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 20, color: Colors.grey[700]),
+          Icon(icon, size: 18, color: iconColor),
           const SizedBox(width: 8),
           Text(
             label,
             style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[700],
-              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              color: iconColor,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
       ),
     );
-  }
-
-  // ⭐⭐⭐ FIXED — Fetch Ratings API
-  Future<Map<String, dynamic>> _fetchFeedbackStats() async {
-    try {
-      final headers = await _apiService.getHeaders();
-      final response = await http.get(
-        Uri.parse(
-          '${ApiService.baseUrl}/feedback/property/${widget.property.id}/stats',
-        ),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      }
-   } catch (e) {
-  // Intentionally ignoring error
-}
-
-    return {};
   }
 }

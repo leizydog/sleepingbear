@@ -12,20 +12,23 @@ import os
 
 load_dotenv()
 
-SECRET_KEY = "your-secret-key-change-this-in-production"
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this-in-production")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against a hash"""
     return pwd_context.verify(plain_password, hashed_password)
 
-def get_password_hash(password: str):
+def get_password_hash(password: str) -> str:
+    """Hash a password using argon2"""
     return pwd_context.hash(password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    """Create JWT access token"""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -37,6 +40,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    """Get current authenticated user from JWT token"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -44,31 +48,31 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     )
     
     try:
-        # Debug print removed for cleaner code, but logic handles the string now
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        
-        # FIX: Get subject as string, then convert to int
         user_id_str: str = payload.get("sub")
         
         if user_id_str is None:
-            print("❌ Error: Token missing 'sub'")
             raise credentials_exception
             
-        user_id = int(user_id_str) # Convert back to int for DB
+        user_id = int(user_id_str)
             
     except (JWTError, ValueError) as e:
-        print(f"❌ JWT/Validation Error: {str(e)}")
         raise credentials_exception
     
     user = db.query(models.User).filter(models.User.id == user_id).first()
     if user is None:
-        print(f"❌ Error: User ID {user_id} not found")
         raise credentials_exception
+    
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user"
+        )
     
     return user
 
 def require_role(allowed_roles: list):
-    """Decorator to check user role"""
+    """Dependency to check if user has required role"""
     def role_checker(current_user: models.User = Depends(get_current_user)):
         if current_user.role not in allowed_roles:
             raise HTTPException(

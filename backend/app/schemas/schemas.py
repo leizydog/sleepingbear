@@ -36,7 +36,7 @@ class UserCreate(UserBase):
 class UserLogin(BaseModel):
     """Schema for user login request."""
     # Wireframe Page 3 fields: EMAIL ADDRESS, PASSWORD
-    email: EmailStr
+    email: str
     password: str
 
 
