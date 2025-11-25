@@ -1,4 +1,5 @@
 import 'property.dart';
+import '../../models/booking.dart';
 
 enum BookingStatus {
   pending,

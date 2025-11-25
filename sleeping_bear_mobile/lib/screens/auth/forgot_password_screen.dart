@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({Key? key}) : super(key: key);
+  const ForgotPasswordScreen({super.key});
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
@@ -12,8 +12,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailController = TextEditingController();
   bool _isLoading = false;
 
-  final Color _primaryColor = Colors.deepPurple;
-  final Color _accentColor = Colors.deepPurpleAccent;
+  // Theme colors will be accessed dynamically in build()
 
   @override
   void dispose() {
@@ -57,8 +56,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ DARK MODE VARIABLES
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+    // Use a darker shade for the gradient end in dark mode or standard accent
+    final accentColor = isDark ? const Color(0xFF6200EA) : Colors.deepPurpleAccent; 
+    final cardColor = Theme.of(context).cardColor;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final inputFill = isDark ? const Color(0xFF2C2C2C) : Colors.grey[50];
+    final hintColor = isDark ? Colors.grey[400] : Colors.grey[600];
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -75,7 +84,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             height: MediaQuery.of(context).size.height * 0.35,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [_primaryColor, _accentColor],
+                colors: [primaryColor, accentColor],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -106,7 +115,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     'Enter your email address to receive a password reset link.',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9), // Fixed Deprecation
                     ),
                   ),
                   
@@ -115,11 +124,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardColor,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
+                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1), // Adjusted shadow for dark mode
                           blurRadius: 20,
                           spreadRadius: 5,
                           offset: const Offset(0, 10),
@@ -134,23 +143,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
+                            style: TextStyle(color: textColor), // User input color
                             decoration: InputDecoration(
                               labelText: 'Email Address',
-                              labelStyle: TextStyle(color: Colors.grey[600]),
-                              prefixIcon: Icon(Icons.email_outlined, color: _primaryColor.withOpacity(0.7)),
+                              labelStyle: TextStyle(color: hintColor),
+                              prefixIcon: Icon(Icons.email_outlined, color: primaryColor.withValues(alpha: 0.7)),
                               filled: true,
-                              fillColor: Colors.grey[50],
+                              fillColor: inputFill,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 borderSide: BorderSide.none,
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey[200]!),
+                                borderSide: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[200]!),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: _primaryColor, width: 1.5),
+                                borderSide: BorderSide(color: primaryColor, width: 1.5),
                               ),
                             ),
                             validator: (value) {
@@ -170,7 +180,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             child: ElevatedButton(
                               onPressed: _isLoading ? null : _handleReset,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: _primaryColor,
+                                backgroundColor: primaryColor,
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(15),
