@@ -64,6 +64,12 @@ class Property(Base):
     status = Column(Enum(PropertyStatus), default=PropertyStatus.PENDING)
     images = Column(JSON, default=[]) 
     image_url = Column(String) 
+    
+    # ✅ NEW: Payment Methods
+    accepts_bpi = Column(Boolean, default=False)
+    accepts_gcash = Column(Boolean, default=False)
+    accepts_cash = Column(Boolean, default=False)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     
     bookings = relationship("Booking", back_populates="property")

@@ -40,7 +40,7 @@ def create_payment_intent(
     
     method = payment_data.payment_method.lower()
 
-    # --- CASE A: CASH ---
+    # --- CASE A: CASH (Internal Mock) ---
     if method == 'cash':
         payment = models.Payment(
             booking_id=booking.id,
@@ -57,61 +57,45 @@ def create_payment_intent(
             'amount': payment.amount,
         }
 
-    # --- CASE B: GCASH (Strict Mock) ---
-    if method == 'gcash':
-        mock_id = f"pi_mock_gcash_{secrets.token_hex(8)}"
-        payment = models.Payment(
-            booking_id=booking.id,
-            amount=booking.total_amount,
-            payment_method='gcash',
-            payment_intent_id=mock_id,
-            status=models.PaymentStatus.PENDING,
-            receipt_number=f"GCASH-{secrets.token_hex(4).upper()}"
-        )
-        db.add(payment)
-        db.commit()
-        return {
-            'client_secret': "mock_secret_gcash",
-            'payment_intent_id': mock_id,
-            'amount': booking.total_amount,
-        }
+    # --- CASE B: BPI & GCASH (Use Stripe) ---
+    # ✅ UPDATED: Both BPI and GCash now use Stripe so you can input details
+    if method == 'bpi' or method == 'card' or method == 'gcash':
+        try:
+            result = PaymentService.create_payment_intent(
+                amount=booking.total_amount,
+                payment_method_type=method,
+                metadata={'booking_id': booking.id, 'user_email': current_user.email}
+            )
+            
+            if not result['success']:
+                raise Exception(result.get('error', 'Unknown Stripe error'))
 
-    # --- CASE C: BPI / CARD (Try Real Stripe, Fallback to Mock) ---
-    try:
-        result = PaymentService.create_payment_intent(
-            amount=booking.total_amount,
-            payment_method_type='card',
-            metadata={'booking_id': booking.id, 'user_email': current_user.email}
-        )
-        
-        if not result['success']:
-            raise Exception(result.get('error', 'Unknown Stripe error'))
+            payment_intent_id = result['payment_intent_id']
+            client_secret = result['client_secret']
+            
+            # Save Payment Record
+            payment = models.Payment(
+                booking_id=booking.id,
+                amount=booking.total_amount,
+                payment_method=method,
+                payment_intent_id=payment_intent_id,
+                status=models.PaymentStatus.PENDING,
+                receipt_number=f"REF-{secrets.token_hex(4).upper()}"
+            )
+            db.add(payment)
+            db.commit()
+            
+            return {
+                'client_secret': client_secret,
+                'payment_intent_id': payment_intent_id,
+                'amount': booking.total_amount,
+            }
 
-        payment_intent_id = result['payment_intent_id']
-        client_secret = result['client_secret']
+        except Exception as e:
+            print(f"⚠️ Stripe Failed: {e}")
+            raise HTTPException(status_code=400, detail=f"Payment Gateway Error: {str(e)}")
 
-    except Exception as e:
-        print(f"⚠️ Stripe Failed ({e}). Switching to Mock for Demo.")
-        payment_intent_id = f"pi_fallback_{secrets.token_hex(8)}"
-        client_secret = "mock_secret_fallback"
-
-    # Save Payment Record
-    payment = models.Payment(
-        booking_id=booking.id,
-        amount=booking.total_amount,
-        payment_method=method,
-        payment_intent_id=payment_intent_id,
-        status=models.PaymentStatus.PENDING,
-        receipt_number=f"REF-{secrets.token_hex(4).upper()}"
-    )
-    db.add(payment)
-    db.commit()
-    
-    return {
-        'client_secret': client_secret,
-        'payment_intent_id': payment_intent_id,
-        'amount': booking.total_amount,
-    }
+    raise HTTPException(status_code=400, detail="Invalid payment method")
 
 @router.post("/confirm")
 def confirm_payment(
@@ -132,7 +116,8 @@ def confirm_payment(
     # 2. Explicitly Find the Booking
     booking = db.query(models.Booking).filter(models.Booking.id == payment.booking_id).first()
     
-    # --- FORCE SUCCESS ---
+    # --- FORCE SUCCESS (For Demo) ---
+    # In prod, check stripe status here: PaymentService.confirm_payment(id)
     payment.status = models.PaymentStatus.COMPLETED
     payment.paid_at = datetime.utcnow()
     

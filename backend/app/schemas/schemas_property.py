@@ -12,7 +12,12 @@ class PropertyBase(BaseModel):
     size_sqm: Optional[float] = 0
     is_available: Optional[bool] = True
     image_url: Optional[str] = None
-    images: Optional[List[str]] = [] # Added images list
+    images: Optional[List[str]] = [] 
+    
+    # ✅ NEW: Payment Fields
+    accepts_bpi: Optional[bool] = False
+    accepts_gcash: Optional[bool] = False
+    accepts_cash: Optional[bool] = False
 
 class PropertyCreate(PropertyBase):
     pass
@@ -22,6 +27,10 @@ class PropertyUpdate(PropertyBase):
     address: Optional[str] = None
     price_per_month: Optional[float] = None
     status: Optional[str] = None
+    # Update payment methods too
+    accepts_bpi: Optional[bool] = None
+    accepts_gcash: Optional[bool] = None
+    accepts_cash: Optional[bool] = None
 
 class PropertyResponse(PropertyBase):
     id: int

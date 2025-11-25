@@ -15,16 +15,15 @@ class PaymentService:
         """
         try:
             # 1. Map our internal types to Stripe types
-            # 'bpi' -> 'card' (BPI acts as a standard credit/debit card in Stripe)
-            # 'gcash' -> 'gcash' (if available) or 'card' fallback
             stripe_method_types = []
             
             if payment_method_type == 'bpi':
+                # BPI in Stripe (via PayMongo or direct) often uses 'card' or 'grabpay' for testing
+                # For this demo, we map BPI to 'card' so you can type test numbers.
                 stripe_method_types = ['card']
             elif payment_method_type == 'gcash':
-                # Note: 'gcash' payment method requires a Stripe account in a supported region (like Singapore)
-                # If using a US test account, this might fail, so we fallback to card for testing if needed
-                stripe_method_types = ['card'] 
+                # Note: 'gcash' payment method requires a Stripe account in a supported region
+                stripe_method_types = ['card'] # Fallback to card for stability if gcash isn't enabled
             else:
                 stripe_method_types = ['card']
 
@@ -34,9 +33,6 @@ class PaymentService:
                 currency=currency.lower(),
                 payment_method_types=stripe_method_types,
                 metadata=metadata or {},
-                automatic_payment_methods={
-                    'enabled': False, # Disable automatic to force specific types
-                }
             )
             
             return {
@@ -45,8 +41,8 @@ class PaymentService:
                 'payment_intent_id': intent.id,
                 'amount': amount,
             }
-        except stripe.StripeError as e:
-            # Fixed: Catch stripe.StripeError directly, not stripe.error.StripeError
+        # ✅ FIXED: Use stripe.error.StripeError instead of stripe.StripeError
+        except stripe.error.StripeError as e:
             print(f"Stripe Error: {e}")
             return {
                 'success': False,
@@ -77,7 +73,8 @@ class PaymentService:
                 'amount': intent.amount / 100,  # Convert back to pesos
                 'payment_method': intent.payment_method_types[0] if intent.payment_method_types else 'unknown',
             }
-        except stripe.StripeError as e:
+        # ✅ FIXED: Exception handling here too
+        except stripe.error.StripeError as e:
             return {
                 'success': False,
                 'error': str(e),
@@ -91,7 +88,7 @@ class PaymentService:
     @staticmethod
     def get_payment_methods():
         return [
-            {'id': 'bpi', 'name': 'BPI (Credit/Debit Card)', 'icon': '💳'},
-            {'id': 'gcash', 'name': 'GCash', 'icon': '📱'},
-            {'id': 'cash', 'name': 'Cash (Admin Office)', 'icon': '💵'},
+            {'id': 'bpi', 'name': 'BPI (Credit/Debit Card)', 'icon': 'card_icon', 'description': 'Pay via Card'},
+            {'id': 'gcash', 'name': 'GCash', 'icon': 'gcash_icon', 'description': 'Live via Stripe'},
+            {'id': 'cash', 'name': 'Cash', 'icon': 'cash_icon', 'description': 'Pay at Office'},
         ]

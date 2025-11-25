@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Request
 from sqlalchemy.orm import Session
 from typing import Optional, List
 import shutil
@@ -11,11 +11,39 @@ from app.db.session import get_db
 
 router = APIRouter(prefix="/properties", tags=["Properties"])
 
-# --- NEW: Image Upload Endpoint ---
+# --- HELPER: Dynamic URL Resolution ---
+def resolve_image_urls(prop, base_url: str):
+    """
+    Converts relative paths (static/uploads/...) to full URLs based on the current server IP.
+    Ignores external URLs (e.g., https://unsplash.com/...).
+    """
+    if not prop:
+        return prop
+    
+    # 1. Handle Thumbnail
+    if prop.image_url and not prop.image_url.startswith("http"):
+        prop.image_url = f"{base_url}/{prop.image_url}"
+        
+    # 2. Handle Image List
+    if prop.images:
+        resolved_images = []
+        for img in prop.images:
+            if img and not img.startswith("http"):
+                resolved_images.append(f"{base_url}/{img}")
+            else:
+                resolved_images.append(img)
+        prop.images = resolved_images
+        
+    return prop
+
+# --- UPDATED: Image Upload Endpoint ---
 @router.post("/upload")
 async def upload_property_images(files: List[UploadFile] = File(...)):
-    """Upload images and return URLs"""
-    image_urls = []
+    """
+    Upload images and return RELATIVE paths.
+    We do NOT store the IP address here anymore.
+    """
+    image_paths = []
     
     # Ensure directory exists
     upload_dir = "static/uploads"
@@ -31,18 +59,17 @@ async def upload_property_images(files: List[UploadFile] = File(...)):
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
-        # Create URL (Assumes localhost for dev, update domain for prod)
-        # The frontend will use this URL to display the image
-        full_url = f"http://127.0.0.1:8000/{file_path}"
-        image_urls.append(full_url)
+        # ✅ Store RELATIVE path (e.g., "static/uploads/abc.jpg")
+        # This ensures the link survives even if your Server IP changes.
+        image_paths.append(file_path)
         
-    return {"images": image_urls}
+    return {"images": image_paths}
 
 @router.post("/", response_model=schemas_property.PropertyResponse, status_code=status.HTTP_201_CREATED)
 def create_property(
     property_data: schemas_property.PropertyCreate,
+    request: Request, # ✅ Needed to return full URL in response
     db: Session = Depends(get_db),
-    # 👇 Add TENANT to the list
     current_user: models.User = Depends(auth.require_role([models.UserRole.ADMIN, models.UserRole.OWNER, models.UserRole.TENANT]))
 ):
     """Create a new property"""
@@ -50,7 +77,6 @@ def create_property(
     
     data = property_data.dict()
     
-    # --- FIX: Remove 'status' from data to avoid "multiple values" error ---
     if 'status' in data:
         del data['status']
 
@@ -67,10 +93,14 @@ def create_property(
     db.add(db_property)
     db.commit()
     db.refresh(db_property)
-    return db_property
+    
+    # Return with resolved URLs so the app shows them immediately
+    base_url = str(request.base_url).rstrip("/")
+    return resolve_image_urls(db_property, base_url)
 
 @router.get("/", response_model=schemas_property.PropertyListResponse)
 def get_properties(
+    request: Request, # ✅ Needed for dynamic IP resolution
     page: int = Query(1, ge=1),
     per_page: int = Query(10, ge=1, le=100),
     search: Optional[str] = None,
@@ -94,7 +124,6 @@ def get_properties(
             (models.Property.address.ilike(search_term))
         )
     
-    # Apply filters for price and bedrooms if provided
     if min_price is not None:
         query = query.filter(models.Property.price_per_month >= min_price)
     if max_price is not None:
@@ -106,18 +135,31 @@ def get_properties(
     offset = (page - 1) * per_page
     properties = query.order_by(models.Property.created_at.desc()).offset(offset).limit(per_page).all()
     
+    # ✅ Resolve URLs dynamically for every property in the list
+    base_url = str(request.base_url).rstrip("/")
+    for p in properties:
+        resolve_image_urls(p, base_url)
+    
     return {"properties": properties, "total": total, "page": page, "per_page": per_page}
 
 @router.get("/{property_id}", response_model=schemas_property.PropertyResponse)
-def get_property(property_id: int, db: Session = Depends(get_db)):
+def get_property(
+    property_id: int, 
+    request: Request, # ✅ Needed for dynamic IP resolution
+    db: Session = Depends(get_db)
+):
     property = db.query(models.Property).filter(models.Property.id == property_id).first()
     if not property:
         raise HTTPException(status_code=404, detail="Property not found")
-    return property
+    
+    # ✅ Resolve URL
+    base_url = str(request.base_url).rstrip("/")
+    return resolve_image_urls(property, base_url)
 
 @router.put("/{property_id}/status", response_model=schemas_property.PropertyResponse)
 def update_property_status(
     property_id: int,
+    request: Request,
     status_update: str = Query(..., regex="^(approved|rejected|pending)$"),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_role([models.UserRole.ADMIN]))
@@ -127,12 +169,15 @@ def update_property_status(
     property.status = status_update
     db.commit()
     db.refresh(property)
-    return property
+    
+    base_url = str(request.base_url).rstrip("/")
+    return resolve_image_urls(property, base_url)
 
 @router.put("/{property_id}", response_model=schemas_property.PropertyResponse)
 def update_property(
     property_id: int,
     property_data: schemas_property.PropertyUpdate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_role([models.UserRole.ADMIN, models.UserRole.OWNER]))
 ):
@@ -150,7 +195,9 @@ def update_property(
     
     db.commit()
     db.refresh(property)
-    return property
+    
+    base_url = str(request.base_url).rstrip("/")
+    return resolve_image_urls(property, base_url)
 
 @router.delete("/{property_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_property(
