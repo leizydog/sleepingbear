@@ -20,7 +20,7 @@ const ListingProgress = ({ step = 1 }) => {
           <div className={`w-10 h-10 rounded-full border-[3px] flex items-center justify-center mb-2 transition-all duration-300 ${getStepStyle(1)}`}>
             <Check size={24} strokeWidth={4} />
           </div>
-          <span className="text-sm font-bold text-black">Details</span>
+          <span className="text-sm font-bold text-black dark:text-white">Details</span>
         </div>
 
         {/* Step 2 */}
@@ -28,7 +28,7 @@ const ListingProgress = ({ step = 1 }) => {
           <div className={`w-10 h-10 rounded-full border-[3px] flex items-center justify-center mb-2 transition-all duration-300 ${getStepStyle(2)}`}>
             <Check size={24} strokeWidth={4} />
           </div>
-          <span className="text-sm font-bold text-black">Payment Method</span>
+          <span className="text-sm font-bold text-black dark:text-white">Payment Method</span>
         </div>
 
         {/* Step 3 */}
@@ -36,7 +36,7 @@ const ListingProgress = ({ step = 1 }) => {
           <div className={`w-10 h-10 rounded-full border-[3px] flex items-center justify-center mb-2 transition-all duration-300 ${getStepStyle(3)}`}>
             <Check size={24} strokeWidth={4} />
           </div>
-          <span className="text-sm font-bold text-black">Publish Confirmation</span>
+          <span className="text-sm font-bold text-black dark:text-white">Publish Confirmation</span>
         </div>
       </div>
     </div>
