@@ -4,7 +4,7 @@ import PropertyCard from '../molecules/PropertyCard';
 const FeaturedListings = ({ properties }) => {
   return (
     <div className="py-10">
-      <p className="text-gray-600 mb-6">{properties.length} properties found matching your criteria.</p>
+      <p className="text-gray-600 dark:text-gray-400 mb-6">{properties.length} properties found matching your criteria.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {properties.map((prop) => (

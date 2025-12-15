@@ -16,18 +16,18 @@ const HomeSearchSection = ({ onSearch }) => {
   };
 
   return (
-    <div className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 animate-slide-up">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Start Your Search</h2>
-      
+    <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-lg border border-gray-100 dark:border-gray-800 animate-slide-up transition-colors">
+      <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Start Your Search</h2>
+
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
         {/* Unit Type */}
         <div className="md:col-span-3">
-          <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Type of Unit</label>
-          <select 
+          <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Type of Unit</label>
+          <select
             name="unitType"
             value={filters.unitType}
             onChange={handleChange}
-            className="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3.5 text-gray-700 font-medium outline-none focus:ring-2 focus:ring-[#a86add] focus:bg-white transition-all cursor-pointer"
+            className="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3.5 text-gray-700 dark:text-gray-200 font-medium outline-none focus:ring-2 focus:ring-[#a86add] focus:bg-white dark:focus:bg-gray-700 transition-all cursor-pointer"
           >
             <option value="">Select Unit Type</option>
             <option value="Studio">Studio</option>
@@ -39,48 +39,48 @@ const HomeSearchSection = ({ onSearch }) => {
 
         {/* Location */}
         <div className="md:col-span-4">
-          <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Location</label>
-          <input 
-            type="text" 
+          <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Location</label>
+          <input
+            type="text"
             name="location"
             value={filters.location}
             onChange={handleChange}
-            placeholder="Enter location (e.g. Pasig)" 
-            className="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3.5 text-gray-700 font-medium outline-none focus:ring-2 focus:ring-[#a86add] focus:bg-white transition-all" 
+            placeholder="Enter location (e.g. Pasig)"
+            className="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3.5 text-gray-700 dark:text-gray-200 font-medium outline-none focus:ring-2 focus:ring-[#a86add] focus:bg-white dark:focus:bg-gray-700 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
           />
         </div>
 
         {/* Price Range */}
         <div className="md:col-span-3 flex gap-3">
           <div className="w-1/2">
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Min Price</label>
-            <input 
-              type="number" 
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Min Price</label>
+            <input
+              type="number"
               name="minPrice"
               value={filters.minPrice}
               onChange={handleChange}
-              placeholder="0" 
-              className="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3.5 text-gray-700 font-medium outline-none focus:ring-2 focus:ring-[#a86add] focus:bg-white transition-all" 
+              placeholder="0"
+              className="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3.5 text-gray-700 dark:text-gray-200 font-medium outline-none focus:ring-2 focus:ring-[#a86add] focus:bg-white dark:focus:bg-gray-700 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
           </div>
           <div className="w-1/2">
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Max Price</label>
-            <input 
-              type="number" 
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-2">Max Price</label>
+            <input
+              type="number"
               name="maxPrice"
               value={filters.maxPrice}
               onChange={handleChange}
-              placeholder="0" 
-              className="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3.5 text-gray-700 font-medium outline-none focus:ring-2 focus:ring-[#a86add] focus:bg-white transition-all" 
+              placeholder="0"
+              className="w-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3.5 text-gray-700 dark:text-gray-200 font-medium outline-none focus:ring-2 focus:ring-[#a86add] focus:bg-white dark:focus:bg-gray-700 transition-all placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
           </div>
         </div>
 
         {/* Search Button */}
         <div className="md:col-span-2">
-          <button 
+          <button
             onClick={() => onSearch(filters)} // Pass filters back to parent
-            className="w-full bg-[#2563eb] hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-200 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
+            className="w-full bg-[#2563eb] hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-200 dark:shadow-blue-900/30 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2"
           >
             <Search size={20} />
             Search
