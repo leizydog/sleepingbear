@@ -74,8 +74,8 @@ def create_property(
     current_user: models.User = Depends(auth.require_role([models.UserRole.ADMIN, models.UserRole.OWNER, models.UserRole.TENANT]))
 ):
     """Create a new property"""
-    # ✅ ALWAYS set to PENDING - Admin must approve all properties
-    initial_status = models.PropertyStatus.PENDING
+    # ✅ Auto-approve properties so they appear immediately
+    initial_status = models.PropertyStatus.APPROVED
     
     data = property_data.dict()
     
