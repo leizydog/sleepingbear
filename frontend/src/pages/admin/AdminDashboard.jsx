@@ -435,6 +435,7 @@ const AdminDashboard = () => {
   useEffect(() => { refreshData(); }, []);
 
   const handlePropertyAction = async (id, action) => {
+    if (user?.role !== 'admin') { alert("Unauthorized: Only Admins can approve/reject listings."); return; }
     if (!window.confirm(`Are you sure you want to ${action} this property?`)) return;
     try {
       const newStatus = action === 'approve' ? 'approved' : 'rejected';
@@ -459,6 +460,7 @@ const AdminDashboard = () => {
 
   // ✅ NEW: Handle Booking Approval/Rejection
   const handleBookingAction = async (id, action) => {
+    if (user?.role !== 'admin') { alert("Unauthorized: Only Admins can approve/reject bookings."); return; }
     if (!window.confirm(`Are you sure you want to ${action} this booking?`)) return;
     try {
       const newStatus = action === 'approve' ? 'confirmed' : 'cancelled';
@@ -599,10 +601,12 @@ const AdminDashboard = () => {
                       { header: 'Status', render: (r) => <StatusPill status={r.status} />, className: 'p-4 text-center' },
                       {
                         header: 'Actions', render: (row) => (
-                          <div className="flex gap-2 justify-center">
-                            <button onClick={() => handlePropertyAction(row.id, 'approve')} className="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600">Accept</button>
-                            <button onClick={() => handlePropertyAction(row.id, 'reject')} className="bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-red-200">Decline</button>
-                          </div>
+                          user?.role === 'admin' ? (
+                            <div className="flex gap-2 justify-center">
+                              <button onClick={() => handlePropertyAction(row.id, 'approve')} className="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600 transition-colors shadow-sm">Accept</button>
+                              <button onClick={() => handlePropertyAction(row.id, 'reject')} className="bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition-colors">Decline</button>
+                            </div>
+                          ) : <span className="text-xs text-gray-400 italic">Admin only</span>
                         ), className: 'p-4 text-center'
                       }
                     ]}
@@ -624,10 +628,12 @@ const AdminDashboard = () => {
                       { header: 'Status', render: (r) => <StatusPill status={r.status} />, className: 'p-4 text-center' },
                       {
                         header: 'Actions', render: (row) => (
-                          <div className="flex gap-2 justify-center">
-                            <button onClick={() => handleBookingAction(row.id, 'approve')} className="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600">Accept</button>
-                            <button onClick={() => handleBookingAction(row.id, 'reject')} className="bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-red-200">Decline</button>
-                          </div>
+                          user?.role === 'admin' ? (
+                            <div className="flex gap-2 justify-center">
+                              <button onClick={() => handleBookingAction(row.id, 'approve')} className="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600 transition-colors shadow-sm">Accept</button>
+                              <button onClick={() => handleBookingAction(row.id, 'reject')} className="bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition-colors">Decline</button>
+                            </div>
+                          ) : <span className="text-xs text-gray-400 italic">Admin only</span>
                         ), className: 'p-4 text-center'
                       }
                     ]}

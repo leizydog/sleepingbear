@@ -40,19 +40,19 @@ export const authAPI = {
 
 export const propertyAPI = {
   getAll: async (params) => (await api.get('/properties/', { params })).data,
-  
+
   // ✅ NEW: Get Owner's Listings
-  getMyListings: async () => (await api.get('/properties/my-listings')).data, 
-  
+  getMyListings: async () => (await api.get('/properties/my-listings')).data,
+
   getOne: async (id) => (await api.get(`/properties/${id}`)).data,
   create: async (data) => (await api.post('/properties/', data)).data,
   update: async (id, data) => (await api.put(`/properties/${id}`, data)).data,
-  updateStatus: async (id, status) => (await api.put(`/properties/${id}/status`, null, { params: { status_update: status } })).data,
+  updateStatus: async (id, status) => (await api.put(`/properties/${id}/status`, { status })).data,
   delete: async (id) => (await api.delete(`/properties/${id}`)).data,
-  
+
   uploadImages: async (formData) => {
     const response = await api.post('/properties/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
   }
@@ -63,10 +63,10 @@ export const bookingAPI = {
   checkAvailability: async (data) => (await api.post('/bookings/check-availability', data)).data,
   getAll: async () => (await api.get('/bookings/')).data,
   getMyBookings: async () => (await api.get('/bookings/my-bookings')).data,
-  
+
   // ✅ NEW: Get Owner's Received Bookings
   getOwnerBookings: async () => (await api.get('/bookings/owner-bookings')).data,
-  
+
   getOne: async (id) => (await api.get(`/bookings/${id}`)).data,
   updateStatus: async (id, status) => (await api.put(`/bookings/${id}`, { status })).data,
   cancel: async (id) => (await api.delete(`/bookings/${id}`)).data,
@@ -77,7 +77,7 @@ export const paymentsAPI = {
   getAll: async () => (await api.get('/payments/')).data,
   getMethods: async () => (await api.get('/payments/methods')).data,
   createIntent: async (data) => (await api.post('/payments/create-intent', data)).data,
-  confirm: async (data) => (await api.post('/payments/confirm', data)).data, 
+  confirm: async (data) => (await api.post('/payments/confirm', data)).data,
   getMyPayments: async () => (await api.get('/payments/my-payments')).data,
   getBookingPayments: async (id) => (await api.get(`/payments/booking/${id}`)).data,
   uploadReceipt: async (formData) => {
@@ -86,8 +86,8 @@ export const paymentsAPI = {
     });
     return response.data;
   },
-  review: async (id, action) => (await api.put(`/payments/${id}/review`, null, { 
-    params: { action } 
+  review: async (id, action) => (await api.put(`/payments/${id}/review`, null, {
+    params: { action }
   })).data,
 };
 
@@ -104,21 +104,21 @@ export const auditAPI = {
 export const mlAPI = {
   // Get model information
   getModelInfo: async () => (await api.get('/ml-predictions/model-info')).data,
-  
+
   // Predict retention for a specific user
   predictUser: async (userId) => (await api.post('/ml-predictions/predict', { user_id: userId })).data,
-  
+
   // Get predictions for all tenants
   predictAll: async (riskLevel = null) => {
     const params = riskLevel ? { risk_level: riskLevel } : {};
     return (await api.get('/ml-predictions/predict-all', { params })).data;
   },
-  
+
   // Get at-risk tenants above threshold
-  getAtRiskTenants: async (threshold = 70) => (await api.get('/ml-predictions/at-risk-tenants', { 
-    params: { threshold } 
+  getAtRiskTenants: async (threshold = 70) => (await api.get('/ml-predictions/at-risk-tenants', {
+    params: { threshold }
   })).data,
-  
+
   // Get overall retention statistics
   getRetentionStats: async () => (await api.get('/ml-predictions/retention-stats')).data,
 };
