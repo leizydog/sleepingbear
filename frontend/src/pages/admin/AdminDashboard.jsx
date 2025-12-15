@@ -440,6 +440,17 @@ const AdminDashboard = () => {
     } catch (error) { console.error(error); alert("Failed to update property status."); }
   };
 
+  // ✅ NEW: Handle Booking Approval/Rejection
+  const handleBookingAction = async (id, action) => {
+    if (!window.confirm(`Are you sure you want to ${action} this booking?`)) return;
+    try {
+      const newStatus = action === 'approve' ? 'confirmed' : 'cancelled';
+      await bookingAPI.updateStatus(id, newStatus);
+      alert(`Booking has been ${action === 'approve' ? 'APPROVED' : 'DECLINED'}.`);
+      refreshData();
+    } catch (error) { console.error(error); alert("Failed to update booking status."); }
+  };
+
   const handlePaymentReview = async (id, action) => {
     if (!window.confirm(`Are you sure you want to ${action.toUpperCase()} this payment?`)) return;
     try {
@@ -574,6 +585,31 @@ const AdminDashboard = () => {
                           <div className="flex gap-2 justify-center">
                             <button onClick={() => handlePropertyAction(row.id, 'approve')} className="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600">Accept</button>
                             <button onClick={() => handlePropertyAction(row.id, 'reject')} className="bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-red-200">Decline</button>
+                          </div>
+                        ), className: 'p-4 text-center'
+                      }
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* ✅ NEW: Pending Bookings Section */}
+              <div className="mb-8">
+                <h3 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">Pending Bookings</h3>
+                <div className="bg-white dark:bg-gray-900 rounded-xl p-6 shadow-sm transition-colors">
+                  <DataTable
+                    data={bookings.filter(b => b.status === 'pending')}
+                    columns={[
+                      { header: 'ID', accessor: 'id', className: 'p-4 font-bold dark:text-white' },
+                      { header: 'Property', render: (r) => `Property #${r.property_id}`, className: 'p-4 dark:text-gray-300' },
+                      { header: 'Tenant', render: (r) => `User #${r.user_id}`, className: 'p-4 dark:text-gray-300' },
+                      { header: 'Amount', render: (r) => `₱${r.total_amount?.toLocaleString()}`, className: 'p-4 font-bold text-green-600' },
+                      { header: 'Status', render: (r) => <StatusPill status={r.status} />, className: 'p-4 text-center' },
+                      {
+                        header: 'Actions', render: (row) => (
+                          <div className="flex gap-2 justify-center">
+                            <button onClick={() => handleBookingAction(row.id, 'approve')} className="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600">Accept</button>
+                            <button onClick={() => handleBookingAction(row.id, 'reject')} className="bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-red-200">Decline</button>
                           </div>
                         ), className: 'p-4 text-center'
                       }
