@@ -585,7 +585,16 @@ const AdminDashboard = () => {
             { header: 'Loc', accessor: 'address', className: 'p-3 text-sm text-gray-500 dark:text-gray-400' },
             { header: 'Price', render: (r) => `₱${r.price_per_month?.toLocaleString()}`, className: 'p-3 text-sm font-bold text-green-600 dark:text-green-400' },
             { header: 'Status', render: (r) => <StatusPill status={r.status} />, className: 'p-3 text-center' },
-            { header: 'Actions', render: (row) => row.status === 'pending' ? <span className="text-xs text-yellow-600 dark:text-yellow-500 font-bold">Action Needed</span> : <span className="text-xs text-gray-400">Managed</span>, className: 'p-3 text-center' }
+            { header: 'Actions', render: (row) => (
+                row.status === 'pending' ? (
+                  <div className="flex gap-2 justify-center">
+                      <button onClick={()=>handlePropertyAction(row.id, 'approve')} className="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600 shadow-sm transition-colors">Accept</button>
+                      <button onClick={()=>handlePropertyAction(row.id, 'reject')} className="bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition-colors">Decline</button>
+                  </div>
+                ) : (
+                  <span className="text-xs text-gray-400 font-medium">Managed</span>
+                )
+            ), className: 'p-3 text-center' }
           ]} />}
 
           {activePage === 'owners' && <TableView title="Owners" data={ownersData} columns={[{ header: 'Name', accessor: 'name', className: 'p-4 font-bold dark:text-white' },{ header: 'Email', accessor: 'email', className: 'p-4 text-blue-600 dark:text-blue-400' },{ header: 'Actions', render: (row) => <UserActionButtons row={row} type="owners" />, className: 'p-4 text-center' }]} />}
