@@ -261,8 +261,53 @@ for p in properties_data:
     db.add(prop)
     properties.append(prop)
 
+# ✅ Add PENDING properties for testing the approval flow
+pending_properties_data = [
+    {
+        "name": "Avida Towers Cloverleaf - Studio (PENDING)",
+        "description": "New listing awaiting admin approval. Cozy studio near SM Hypermarket.",
+        "address": "Avida Towers Cloverleaf, Quezon City",
+        "price": 12000,
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "size": 22,
+        "owner": owners[0]
+    },
+    {
+        "name": "Suntrust Shanata - 1BR (PENDING)",
+        "description": "Pending approval. Modern 1BR with balcony, near Eastwood.",
+        "address": "Suntrust Shanata, Quezon City",
+        "price": 20000,
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "size": 32,
+        "owner": owners[1]
+    },
+]
+
+for p in pending_properties_data:
+    prop = models.Property(
+        name=p["name"],
+        description=p["description"],
+        address=p["address"],
+        price_per_month=p["price"],
+        bedrooms=p["bedrooms"],
+        bathrooms=p["bathrooms"],
+        size_sqm=p["size"],
+        is_available=True,
+        status=models.PropertyStatus.PENDING,  # ✅ PENDING for approval
+        owner_id=p["owner"].id,
+        accepts_gcash=True,
+        accepts_bpi=True,
+        accepts_cash=True,
+        gcash_number="09171234567",
+        bpi_number="1234567890"
+    )
+    db.add(prop)
+    properties.append(prop)
+
 db.commit()
-print(f"✅ Created {len(properties)} properties\n")
+print(f"✅ Created {len(properties)} properties (including 2 pending for approval)\\n")
 
 # ============================================================================
 # SEED BOOKINGS (With varied patterns for ML)
