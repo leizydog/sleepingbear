@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import AccountDropdown from './AccountDropdown';
+import ThemeToggle from '../atoms/ThemeToggle';
 
 // IMPORT LOGO
 import logo from '../../assets/logo.jpg';
@@ -59,6 +60,8 @@ const Header = ({ isLoggedIn = true }) => {
             >
               List your Place
             </button>
+
+            <ThemeToggle />
 
             <div className="h-8 w-[1px] bg-gray-200 dark:bg-gray-700"></div>
 
