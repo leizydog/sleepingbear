@@ -77,12 +77,12 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fc] font-sans">
+    <div className="min-h-screen bg-[#f8f9fc] dark:bg-gray-950 font-sans transition-colors">
       <Header isLoggedIn={!!user} />
 
       <div className="max-w-4xl mx-auto px-6 py-10 pt-28">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Account Settings</h1>
-        <p className="text-gray-500 mb-8">Manage your profile information and security.</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Account Settings</h1>
+        <p className="text-gray-500 dark:text-gray-400 mb-8">Manage your profile information and security.</p>
 
         {/* Feedback Message */}
         {message.text && (
@@ -92,11 +92,11 @@ const SettingsPage = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          
+
           {/* --- PROFILE CARD --- */}
-          <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 h-fit">
-            <div className="flex items-center gap-3 mb-6 text-gray-800">
-              <div className="bg-blue-100 p-2 rounded-full text-blue-600">
+          <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 h-fit">
+            <div className="flex items-center gap-3 mb-6 text-gray-800 dark:text-white">
+              <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full text-blue-600 dark:text-blue-400">
                 <User size={24} />
               </div>
               <h2 className="text-xl font-bold">Profile Details</h2>
@@ -104,38 +104,38 @@ const SettingsPage = () => {
 
             <form onSubmit={handleProfileUpdate} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Full Name</label>
-                <input 
-                  type="text" 
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Full Name</label>
+                <input
+                  type="text"
                   value={profileData.full_name}
-                  onChange={(e) => setProfileData({...profileData, full_name: e.target.value})}
-                  className="w-full border-2 border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors"
+                  onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
+                  className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl p-3 outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Phone Number</label>
-                <input 
-                  type="text" 
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Phone Number</label>
+                <input
+                  type="text"
                   value={profileData.phone}
-                  onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                  className="w-full border-2 border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 transition-colors"
+                  onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                  className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl p-3 outline-none focus:border-blue-500 transition-colors"
                   placeholder="09XX XXX XXXX"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email Address</label>
-                <input 
-                  type="email" 
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Email Address</label>
+                <input
+                  type="email"
                   value={user?.email || ''}
                   disabled
-                  className="w-full border-2 border-gray-100 bg-gray-50 rounded-xl p-3 text-gray-400 cursor-not-allowed"
+                  className="w-full border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 rounded-xl p-3 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                 />
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all mt-4 flex items-center justify-center gap-2 shadow-lg shadow-blue-200"
+                className="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all mt-4 flex items-center justify-center gap-2 shadow-lg shadow-blue-200 dark:shadow-none"
               >
                 {loading ? <Loader2 className="animate-spin" /> : <><Save size={18} /> Save Profile</>}
               </button>
@@ -143,9 +143,9 @@ const SettingsPage = () => {
           </div>
 
           {/* --- SECURITY CARD --- */}
-          <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 h-fit">
-            <div className="flex items-center gap-3 mb-6 text-gray-800">
-              <div className="bg-purple-100 p-2 rounded-full text-purple-600">
+          <div className="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 h-fit">
+            <div className="flex items-center gap-3 mb-6 text-gray-800 dark:text-white">
+              <div className="bg-purple-100 dark:bg-purple-900/30 p-2 rounded-full text-purple-600 dark:text-purple-400">
                 <Lock size={24} />
               </div>
               <h2 className="text-xl font-bold">Security</h2>
@@ -153,38 +153,38 @@ const SettingsPage = () => {
 
             <form onSubmit={handlePasswordChange} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Current Password</label>
-                <input 
-                  type="password" 
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Current Password</label>
+                <input
+                  type="password"
                   value={securityData.old_password}
-                  onChange={(e) => setSecurityData({...securityData, old_password: e.target.value})}
-                  className="w-full border-2 border-gray-200 rounded-xl p-3 outline-none focus:border-purple-500 transition-colors"
+                  onChange={(e) => setSecurityData({ ...securityData, old_password: e.target.value })}
+                  className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl p-3 outline-none focus:border-purple-500 transition-colors"
                 />
               </div>
-              <hr className="border-gray-100 my-2" />
+              <hr className="border-gray-100 dark:border-gray-800 my-2" />
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">New Password</label>
-                <input 
-                  type="password" 
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">New Password</label>
+                <input
+                  type="password"
                   value={securityData.new_password}
-                  onChange={(e) => setSecurityData({...securityData, new_password: e.target.value})}
-                  className="w-full border-2 border-gray-200 rounded-xl p-3 outline-none focus:border-purple-500 transition-colors"
+                  onChange={(e) => setSecurityData({ ...securityData, new_password: e.target.value })}
+                  className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl p-3 outline-none focus:border-purple-500 transition-colors"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Confirm New Password</label>
-                <input 
-                  type="password" 
+                <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">Confirm New Password</label>
+                <input
+                  type="password"
                   value={securityData.confirm_password}
-                  onChange={(e) => setSecurityData({...securityData, confirm_password: e.target.value})}
-                  className="w-full border-2 border-gray-200 rounded-xl p-3 outline-none focus:border-purple-500 transition-colors"
+                  onChange={(e) => setSecurityData({ ...securityData, confirm_password: e.target.value })}
+                  className="w-full border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl p-3 outline-none focus:border-purple-500 transition-colors"
                 />
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading || !securityData.old_password || !securityData.new_password}
-                className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 transition-all mt-4 flex items-center justify-center gap-2 shadow-lg shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-purple-600 text-white font-bold py-3 rounded-xl hover:bg-purple-700 transition-all mt-4 flex items-center justify-center gap-2 shadow-lg shadow-purple-200 dark:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? <Loader2 className="animate-spin" /> : 'Change Password'}
               </button>

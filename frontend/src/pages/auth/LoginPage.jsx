@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  
+
   // 1. Capture Form Data
   const [formData, setFormData] = useState({
     email: '',
@@ -59,7 +59,7 @@ const LoginPage = () => {
 
       {/* Error Message Alert */}
       {error && (
-        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-semibold text-center animate-shake">
+        <div className="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 text-sm font-semibold text-center animate-shake">
           {error}
         </div>
       )}
@@ -67,37 +67,37 @@ const LoginPage = () => {
       <form onSubmit={handleLogin} className="space-y-6">
         {/* Email Field */}
         <div className="group">
-          <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">
+          <label className="block text-xs font-extrabold text-gray-400 dark:text-gray-500 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">
             Email Address
           </label>
-          <input 
-            type="email" 
+          <input
+            type="email"
             name="email"
             value={formData.email}
             onChange={handleChange}
             required
-            className="w-full border-b-2 border-gray-200 bg-transparent py-3 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors placeholder-gray-300" 
-            placeholder="name@example.com" 
+            className="w-full border-b-2 border-gray-200 dark:border-gray-700 bg-transparent py-3 text-lg font-semibold text-gray-800 dark:text-white outline-none focus:border-brand-purple transition-colors placeholder-gray-300 dark:placeholder-gray-600"
+            placeholder="name@example.com"
           />
         </div>
 
         {/* Password Field */}
         <div className="group relative">
-          <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">
+          <label className="block text-xs font-extrabold text-gray-400 dark:text-gray-500 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">
             Password
           </label>
-          <input 
-            type={showPass ? "text" : "password"} 
+          <input
+            type={showPass ? "text" : "password"}
             name="password"
             value={formData.password}
             onChange={handleChange}
             required
-            className="w-full border-b-2 border-gray-200 bg-transparent py-3 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors placeholder-gray-300 pr-10" 
-            placeholder="••••••••" 
+            className="w-full border-b-2 border-gray-200 dark:border-gray-700 bg-transparent py-3 text-lg font-semibold text-gray-800 dark:text-white outline-none focus:border-brand-purple transition-colors placeholder-gray-300 dark:placeholder-gray-600 pr-10"
+            placeholder="••••••••"
           />
-          <button 
-            type="button" 
-            onClick={() => setShowPass(!showPass)} 
+          <button
+            type="button"
+            onClick={() => setShowPass(!showPass)}
             className="absolute right-2 bottom-3 text-gray-400 hover:text-brand-purple transition-colors"
           >
             {showPass ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -106,8 +106,8 @@ const LoginPage = () => {
 
         {/* Submit Button */}
         <div className="pt-6">
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={isLoading}
             className="w-full bg-brand-purple text-white font-bold py-4 rounded-2xl shadow-xl shadow-purple-200 hover:bg-brand-darkPurple transition-all transform hover:-translate-y-1 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2"
           >
@@ -125,9 +125,9 @@ const LoginPage = () => {
         <div className="text-center mt-6">
           <p className="text-gray-500 text-sm">
             Don't have an account?{' '}
-            <button 
-              type="button" 
-              onClick={() => navigate('/register')} 
+            <button
+              type="button"
+              onClick={() => navigate('/register')}
               className="text-brand-purple font-bold hover:underline"
             >
               Register Account

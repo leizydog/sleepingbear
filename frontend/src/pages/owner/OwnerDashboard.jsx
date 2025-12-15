@@ -13,7 +13,7 @@ const PaymentReviewModal = ({ payment, onClose, onReview }) => {
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-200">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-gray-200 dark:border-gray-800">
         <div className="bg-[#a86add] p-6 flex justify-between items-center">
           <h3 className="text-xl font-bold text-white">Review Tenant Payment</h3>
           <button onClick={onClose}><Icon name="X" className="text-white" /></button>
@@ -22,22 +22,22 @@ const PaymentReviewModal = ({ payment, onClose, onReview }) => {
         <div className="p-6 space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-gray-500">Amount</p>
-              <p className="text-xl font-bold text-green-600">₱{payment.amount}</p>
+              <p className="text-gray-500 dark:text-gray-400">Amount</p>
+              <p className="text-xl font-bold text-green-600 dark:text-green-400">₱{payment.amount}</p>
             </div>
             <div>
-              <p className="text-gray-500">Method</p>
-              <p className="font-bold text-gray-800 uppercase">{payment.method}</p>
+              <p className="text-gray-500 dark:text-gray-400">Method</p>
+              <p className="font-bold text-gray-800 dark:text-gray-200 uppercase">{payment.method}</p>
             </div>
             <div className="col-span-2">
-              <p className="text-gray-500">Booking Reference</p>
-              <p className="font-bold text-gray-800">Booking #{payment.booking_id}</p>
+              <p className="text-gray-500 dark:text-gray-400">Booking Reference</p>
+              <p className="font-bold text-gray-800 dark:text-gray-200">Booking #{payment.booking_id}</p>
             </div>
           </div>
 
-          <div className="border-t border-gray-200 pt-4">
-            <p className="text-gray-500 mb-2">Proof of Payment</p>
-            <div className="bg-gray-100 rounded-lg p-2 flex items-center justify-center min-h-[200px]">
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <p className="text-gray-500 dark:text-gray-400 mb-2">Proof of Payment</p>
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-2 flex items-center justify-center min-h-[200px]">
               {payment.proof ? (
                 <img src={payment.proof} alt="Receipt" className="max-h-[300px] rounded object-contain" />
               ) : (
@@ -50,7 +50,7 @@ const PaymentReviewModal = ({ payment, onClose, onReview }) => {
           </div>
         </div>
 
-        <div className="p-6 border-t border-gray-200 flex gap-4">
+        <div className="p-6 border-t border-gray-200 dark:border-gray-700 flex gap-4">
           <button
             onClick={() => onReview(payment.raw_id, 'reject')}
             className="flex-1 bg-red-50 text-red-600 hover:bg-red-100 py-3 rounded-xl font-bold transition-all border border-red-200"
@@ -197,10 +197,10 @@ const OwnerDashboard = () => {
     }
 
     if (imageUrl) {
-      return <img src={imageUrl} alt={name} className="w-14 h-10 object-cover rounded-md border border-gray-200" />;
+      return <img src={imageUrl} alt={name} className="w-14 h-10 object-cover rounded-md border border-gray-200 dark:border-gray-700" />;
     }
     return (
-      <div className="w-14 h-10 bg-gray-50 rounded-md border border-gray-200 flex items-center justify-center text-gray-300">
+      <div className="w-14 h-10 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-300 dark:text-gray-600">
         <ImageIcon size={16} />
       </div>
     );
@@ -325,10 +325,10 @@ const OwnerDashboard = () => {
           </div>
 
           {/* Export Section */}
-          <div className="flex items-center justify-between bg-gray-50 rounded-xl p-4">
+          <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
             <div>
-              <p className="font-bold text-gray-800">Download Report</p>
-              <p className="text-sm text-gray-500">Export all your booking data as CSV</p>
+              <p className="font-bold text-gray-800 dark:text-gray-200">Download Report</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Export all your booking data as CSV</p>
             </div>
             <button
               onClick={exportCSV}
@@ -358,8 +358,8 @@ const OwnerDashboard = () => {
   };
 
   const EmptyState = ({ message }) => (
-    <div className="py-20 text-center flex flex-col items-center justify-center text-gray-400">
-      <div className="bg-gray-50 p-4 rounded-full mb-3">
+    <div className="py-20 text-center flex flex-col items-center justify-center text-gray-400 dark:text-gray-500">
+      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-full mb-3">
         <Inbox size={32} className="opacity-50" />
       </div>
       <p className="text-sm font-medium">{message}</p>
@@ -369,7 +369,7 @@ const OwnerDashboard = () => {
   if (loading) return <div className="min-h-screen flex justify-center items-center"><Loader2 className="animate-spin text-[#a86add]" size={40} /></div>;
 
   return (
-    <div className="min-h-screen bg-[#f8f9fc] font-sans text-gray-900">
+    <div className="min-h-screen bg-[#f8f9fc] dark:bg-gray-950 font-sans text-gray-900 dark:text-white transition-colors">
       <Header isLoggedIn={true} />
 
       {reviewPayment && (
@@ -383,8 +383,8 @@ const OwnerDashboard = () => {
       <main className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl font-extrabold text-gray-900">Dashboard Overview</h1>
-            <p className="text-gray-500 text-sm mt-1">Manage your properties and track bookings.</p>
+            <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Dashboard Overview</h1>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Manage your properties and track bookings.</p>
           </div>
           <button
             onClick={() => navigate('/owner/add-listing')}
@@ -395,7 +395,7 @@ const OwnerDashboard = () => {
           </button>
         </div>
 
-        <div className="flex gap-2 border-b border-gray-200 mb-6 overflow-x-auto pb-1">
+        <div className="flex gap-2 border-b border-gray-200 dark:border-gray-800 mb-6 overflow-x-auto pb-1">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             const TabIcon = tab.icon;
@@ -406,8 +406,8 @@ const OwnerDashboard = () => {
                 className={`
                     relative flex items-center gap-2 px-5 py-3 rounded-t-lg transition-all whitespace-nowrap
                     ${isActive
-                    ? 'text-[#a86add] bg-white border-b-2 border-[#a86add] shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    ? 'text-[#a86add] bg-white dark:bg-gray-900 border-b-2 border-[#a86add] shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800'
                   }
                 `}
               >
@@ -416,7 +416,7 @@ const OwnerDashboard = () => {
                   {tab.label}
                 </span>
                 {tab.count > 0 && (
-                  <span className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-[#a86add]/10 text-[#a86add]' : 'bg-gray-200 text-gray-600'
+                  <span className={`ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-[#a86add]/10 text-[#a86add]' : 'bg-gray-200 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
                     }`}>
                     {tab.count}
                   </span>
@@ -426,7 +426,7 @@ const OwnerDashboard = () => {
           })}
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden min-h-[400px]">
+        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden min-h-[400px]">
           {renderContent()}
         </div>
       </main>

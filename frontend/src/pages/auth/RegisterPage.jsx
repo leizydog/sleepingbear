@@ -151,38 +151,38 @@ const RegisterPage = () => {
           {/* Left Column: Names */}
           <div className="space-y-6">
             <div className="group">
-              <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">First Name</label>
+              <label className="block text-xs font-extrabold text-gray-400 dark:text-gray-500 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">First Name</label>
               <input
                 type="text"
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
                 required
-                className={`w-full border-b-2 ${fieldErrors.firstName ? 'border-red-400' : 'border-gray-200'} bg-transparent py-2 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors`}
+                className={`w-full border-b-2 ${fieldErrors.firstName ? 'border-red-400' : 'border-gray-200 dark:border-gray-700'} bg-transparent py-2 text-lg font-semibold text-gray-800 dark:text-white outline-none focus:border-brand-purple transition-colors`}
                 placeholder="Enter first name"
               />
               {fieldErrors.firstName && <p className="text-red-500 text-xs mt-1 font-medium">{fieldErrors.firstName}</p>}
             </div>
             <div className="group">
-              <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Middle Name (Optional)</label>
+              <label className="block text-xs font-extrabold text-gray-400 dark:text-gray-500 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Middle Name (Optional)</label>
               <input
                 type="text"
                 name="middleName"
                 value={formData.middleName}
                 onChange={handleChange}
-                className="w-full border-b-2 border-gray-200 bg-transparent py-2 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors"
+                className="w-full border-b-2 border-gray-200 dark:border-gray-700 bg-transparent py-2 text-lg font-semibold text-gray-800 dark:text-white outline-none focus:border-brand-purple transition-colors"
                 placeholder="Enter middle name"
               />
             </div>
             <div className="group">
-              <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Last Name</label>
+              <label className="block text-xs font-extrabold text-gray-400 dark:text-gray-500 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Last Name</label>
               <input
                 type="text"
                 name="lastName"
                 value={formData.lastName}
                 onChange={handleChange}
                 required
-                className={`w-full border-b-2 ${fieldErrors.lastName ? 'border-red-400' : 'border-gray-200'} bg-transparent py-2 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors`}
+                className={`w-full border-b-2 ${fieldErrors.lastName ? 'border-red-400' : 'border-gray-200 dark:border-gray-700'} bg-transparent py-2 text-lg font-semibold text-gray-800 dark:text-white outline-none focus:border-brand-purple transition-colors`}
                 placeholder="Enter last name"
               />
               {fieldErrors.lastName && <p className="text-red-500 text-xs mt-1 font-medium">{fieldErrors.lastName}</p>}
@@ -192,40 +192,40 @@ const RegisterPage = () => {
           {/* Right Column: Contact & Auth */}
           <div className="space-y-6">
             <div className="group">
-              <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Email Address</label>
+              <label className="block text-xs font-extrabold text-gray-400 dark:text-gray-500 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Email Address</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className={`w-full border-b-2 ${fieldErrors.email ? 'border-red-400' : 'border-gray-200'} bg-transparent py-2 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors`}
+                className={`w-full border-b-2 ${fieldErrors.email ? 'border-red-400' : 'border-gray-200 dark:border-gray-700'} bg-transparent py-2 text-lg font-semibold text-gray-800 dark:text-white outline-none focus:border-brand-purple transition-colors`}
                 placeholder="name@example.com"
               />
               {fieldErrors.email && <p className="text-red-500 text-xs mt-1 font-medium">{fieldErrors.email}</p>}
             </div>
             <div className="group">
-              <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Contact Number</label>
+              <label className="block text-xs font-extrabold text-gray-400 dark:text-gray-500 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Contact Number</label>
               <input
                 type="tel"
                 name="phone"
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                className={`w-full border-b-2 ${fieldErrors.phone ? 'border-red-400' : 'border-gray-200'} bg-transparent py-2 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors`}
+                className={`w-full border-b-2 ${fieldErrors.phone ? 'border-red-400' : 'border-gray-200 dark:border-gray-700'} bg-transparent py-2 text-lg font-semibold text-gray-800 dark:text-white outline-none focus:border-brand-purple transition-colors`}
                 placeholder="09XX XXX XXXX"
               />
               {fieldErrors.phone && <p className="text-red-500 text-xs mt-1 font-medium">{fieldErrors.phone}</p>}
             </div>
             <div className="group relative">
-              <label className="block text-xs font-extrabold text-gray-400 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Password</label>
+              <label className="block text-xs font-extrabold text-gray-400 dark:text-gray-500 uppercase mb-2 group-focus-within:text-brand-purple transition-colors">Password</label>
               <input
                 type={showPass ? "text" : "password"}
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className={`w-full border-b-2 ${fieldErrors.password ? 'border-red-400' : 'border-gray-200'} bg-transparent py-2 text-lg font-semibold text-gray-800 outline-none focus:border-brand-purple transition-colors pr-10`}
+                className={`w-full border-b-2 ${fieldErrors.password ? 'border-red-400' : 'border-gray-200 dark:border-gray-700'} bg-transparent py-2 text-lg font-semibold text-gray-800 dark:text-white outline-none focus:border-brand-purple transition-colors pr-10`}
                 placeholder="••••••••"
               />
               <button

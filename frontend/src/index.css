@@ -4,11 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Poppins', sans-serif;
-  background-color: #f8f9fc;
-  color: #1f2937;
-  margin: 0;
+@layer base {
+  body {
+    @apply font-sans bg-[#f8f9fc] text-gray-800 dark:bg-gray-950 dark:text-gray-100 transition-colors duration-200;
+    margin: 0;
+  }
 }
 
 /* Premium Input Auto-fill Fix */
@@ -17,6 +17,13 @@ input:-webkit-autofill:hover,
 input:-webkit-autofill:focus, 
 input:-webkit-autofill:active{
     -webkit-box-shadow: 0 0 0 30px white inset !important;
+}
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover, 
+.dark input:-webkit-autofill:focus, 
+.dark input:-webkit-autofill:active{
+    -webkit-box-shadow: 0 0 0 30px #1f2937 inset !important; /* gray-800 */
+    -webkit-text-fill-color: white !important;
 }
 
 /* Animations */
@@ -29,24 +36,34 @@ input:-webkit-autofill:active{
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.5);
   }
+  
+  .dark .glass-panel {
+    background: rgba(17, 24, 39, 0.7); /* gray-900 */
+    border: 1px solid rgba(55, 65, 81, 0.5); /* gray-700 */
+  }
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-/* --- MODERN CALENDAR STYLES (Add this block) --- */
+/* --- MODERN CALENDAR STYLES --- */
 .react-datepicker {
   font-family: 'Poppins', sans-serif !important;
   border: none !important;
   border-radius: 16px !important;
-  box-shadow: none !important; /* Remove default shadow as container has it */
+  box-shadow: none !important; 
   overflow: hidden;
   width: 100%;
   display: block;
 }
+.dark .react-datepicker {
+  background-color: #1f2937 !important; /* gray-800 */
+  color: white !important;
+}
 
 .react-datepicker__month-container {
   width: 100% !important;
+  background-color: transparent !important;
 }
 
 .react-datepicker__header {
@@ -54,14 +71,21 @@ input:-webkit-autofill:active{
   border-bottom: 1px solid #f3f4f6 !important;
   padding-top: 15px !important;
 }
+.dark .react-datepicker__header {
+  background-color: #1f2937 !important; /* gray-800 */
+  border-bottom: 1px solid #374151 !important; /* gray-700 */
+}
 
 .react-datepicker__current-month {
-  color: #1f2937 !important; /* Gray-900 */
+  color: #1f2937 !important; 
   font-weight: 800 !important;
   font-size: 1rem !important;
   margin-bottom: 10px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+.dark .react-datepicker__current-month {
+  color: #f3f4f6 !important; /* gray-100 */
 }
 
 .react-datepicker__day-name {
@@ -79,6 +103,12 @@ input:-webkit-autofill:active{
   font-weight: 500;
   color: #374151; /* Gray-700 */
   transition: all 0.2s ease-in-out;
+}
+.dark .react-datepicker__day {
+  color: #e5e7eb !important; /* gray-200 */
+}
+.dark .react-datepicker__day:hover:not(.react-datepicker__day--disabled) {
+  background-color: #374151 !important; /* gray-700 */
 }
 
 /* Hover State */
@@ -101,6 +131,10 @@ input:-webkit-autofill:active{
 .react-datepicker__day--in-range {
   background-color: #f5f3ff !important; /* Purple-50 */
   color: #a86add !important;
+}
+.dark .react-datepicker__day--in-range {
+  background-color: rgba(168, 106, 221, 0.2) !important; /* purple-500/20 */
+  color: #d8b4fe !important; /* purple-300 */
 }
 
 /* Today's Date */
@@ -127,6 +161,9 @@ input:-webkit-autofill:active{
   text-decoration: line-through;
   cursor: not-allowed;
   opacity: 0.5;
+}
+.dark .react-datepicker__day--disabled {
+  color: #4b5563 !important; /* gray-600 */
 }
 
 /* Hide Default Navigation (We use custom icons) */

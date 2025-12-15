@@ -8,15 +8,15 @@ const ConfirmationPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#e6e6e6] font-sans pb-20">
+    <div className="min-h-screen bg-[#e6e6e6] dark:bg-gray-950 font-sans pb-20 transition-colors">
       <Header />
-      
+
       <div className="px-4 pt-10">
         {/* Progress Bar set to Step 3 */}
         <PaymentProgress step={3} />
-        
+
         {/* Success Card */}
-        <BookingSuccess 
+        <BookingSuccess
           onDownload={() => alert("Downloading Receipt...")}
           onHome={() => navigate('/search')}
         />
