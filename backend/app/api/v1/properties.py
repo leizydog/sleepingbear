@@ -74,13 +74,11 @@ def create_property(
     current_user: models.User = Depends(auth.require_role([models.UserRole.ADMIN, models.UserRole.OWNER, models.UserRole.TENANT]))
 ):
     """Create a new property"""
-    # ✅ FIX: Default to PENDING so Admins must approve it
-    initial_status = "pending" # Using string to be safe, or models.PropertyStatus.PENDING if available
-    
     data = property_data.dict()
     
-    # Force status to pending regardless of input
-    data['status'] = initial_status
+    # ✅ FIX: Use enum value for proper database comparison
+    # Force status to PENDING so Admins must approve it
+    data['status'] = models.PropertyStatus.PENDING
 
     # Handle Images (Set first as thumbnail)
     if "images" in data and data["images"] and isinstance(data["images"], list):
@@ -130,9 +128,14 @@ def get_properties(
     
     # ✅ FIX: Default to APPROVED if no filter provided. Pass "all" to see everything.
     if status_filter is None:
-        query = query.filter(models.Property.status == "approved") # Using string "approved" matches regex
-    elif status_filter.lower() != "all":
-        query = query.filter(models.Property.status == status_filter)
+        query = query.filter(models.Property.status == models.PropertyStatus.APPROVED)
+    elif status_filter.lower() == "pending":
+        query = query.filter(models.Property.status == models.PropertyStatus.PENDING)
+    elif status_filter.lower() == "approved":
+        query = query.filter(models.Property.status == models.PropertyStatus.APPROVED)
+    elif status_filter.lower() == "rejected":
+        query = query.filter(models.Property.status == models.PropertyStatus.REJECTED)
+    # If status_filter is "all", don't add any status filter
 
     if available_only:
         query = query.filter(models.Property.is_available == True)
@@ -188,7 +191,14 @@ def update_property_status(
 
     property = db.query(models.Property).filter(models.Property.id == property_id).first()
     if not property: raise HTTPException(status_code=404, detail="Property not found")
-    property.status = status_update
+    
+    # ✅ FIX: Map string to enum for proper database storage
+    status_enum_map = {
+        "pending": models.PropertyStatus.PENDING,
+        "approved": models.PropertyStatus.APPROVED,
+        "rejected": models.PropertyStatus.REJECTED
+    }
+    property.status = status_enum_map[status_update]
     db.commit()
     db.refresh(property)
     
