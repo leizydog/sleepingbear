@@ -54,3 +54,31 @@ def read_root():
 @app.get("/health")
 def health_check():
     return {"status": "healthy"}
+
+# Debug endpoint to check database status
+@app.get("/debug/db-status")
+def check_db_status():
+    from app.db.session import SessionLocal
+    try:
+        db = SessionLocal()
+        user_count = db.query(models.User).count()
+        property_count = db.query(models.Property).count()
+        booking_count = db.query(models.Booking).count()
+        payment_count = db.query(models.Payment).count()
+        
+        # Check for pending properties
+        pending_props = db.query(models.Property).filter(
+            models.Property.status == models.PropertyStatus.PENDING
+        ).count()
+        
+        db.close()
+        return {
+            "status": "connected",
+            "users": user_count,
+            "properties": property_count,
+            "pending_properties": pending_props,
+            "bookings": booking_count,
+            "payments": payment_count
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
