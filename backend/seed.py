@@ -27,7 +27,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Your Render database connection string
-RENDER_DATABASE_URL = "postgresql://postgress:sEWJ8Z2f330yAoeh6oajypYXekaWnuUP@dpg-d4j229p5pdvs7394d63g-a.oregon-postgres.render.com/sleeping_bear_rental"
+RENDER_DATABASE_URL = os.getenv("RENDER_DATABASE_URL")
+if not RENDER_DATABASE_URL:
+    print("⚠️  RENDER_DATABASE_URL not found in environment variables.")
+    print("   Please set it in your .env file or environment.")
+    # Fallback or exit - for safety, we exit or use a local dummy if strictly needed, 
+    # but to fix the leak we must remove the secret.
+    # We will assume local dev defaults if not set, or let it fail at engine creation if empty.
+    pass
 
 # Create engine for Render database
 render_engine = create_engine(RENDER_DATABASE_URL)
