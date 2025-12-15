@@ -40,32 +40,27 @@ def resolve_image_urls(prop, base_url: str):
         
     return prop
 
-# --- UPDATED: Image Upload Endpoint ---
+# --- UPDATED: Image Upload Endpoint (Using Cloudinary) ---
 @router.post("/upload")
 async def upload_property_images(files: List[UploadFile] = File(...)):
     """
-    Upload images and return RELATIVE paths.
+    Upload images to Cloudinary and return the URLs.
     """
-    image_paths = []
+    from app.core.cloudinary_upload import upload_image_to_cloudinary
     
-    # Ensure directory exists
-    upload_dir = "static/uploads"
-    os.makedirs(upload_dir, exist_ok=True)
+    image_urls = []
     
     for file in files:
-        # Generate unique filename
-        file_ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
-        unique_filename = f"{uuid.uuid4()}.{file_ext}"
-        file_path = f"{upload_dir}/{unique_filename}"
-        
-        # Save file
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        try:
+            # Upload to Cloudinary
+            url = await upload_image_to_cloudinary(file, folder="sleepingbear/properties")
+            image_urls.append(url)
+        except Exception as e:
+            print(f"Upload failed for {file.filename}: {e}")
+            # Continue with other files even if one fails
+            continue
             
-        # Store relative path
-        image_paths.append(file_path)
-        
-    return {"images": image_paths}
+    return {"images": image_urls}
 
 @router.post("/", response_model=schemas_property.PropertyResponse, status_code=status.HTTP_201_CREATED)
 def create_property(

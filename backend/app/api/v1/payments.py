@@ -111,7 +111,7 @@ def create_payment_intent(
 
     raise HTTPException(status_code=400, detail="Invalid payment method")
 
-# --- Upload Receipt for Manual GCash ---
+# --- Upload Receipt for Manual GCash (Using Cloudinary) ---
 @router.post("/upload-receipt")
 async def upload_payment_receipt(
     booking_id: int = Form(...),
@@ -119,20 +119,17 @@ async def upload_payment_receipt(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
+    from app.core.cloudinary_upload import upload_image_to_cloudinary
+    
     booking = db.query(models.Booking).filter(models.Booking.id == booking_id).first()
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
 
-    # 1. Save File
-    upload_dir = "static/uploads/receipts"
-    os.makedirs(upload_dir, exist_ok=True)
-    
-    file_ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
-    filename = f"receipt_{booking.id}_{uuid.uuid4()}.{file_ext}"
-    file_path = f"{upload_dir}/{filename}"
-    
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+    # 1. Upload to Cloudinary
+    try:
+        receipt_url = await upload_image_to_cloudinary(file, folder="sleepingbear/receipts")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload receipt: {str(e)}")
 
     # 2. Create Payment Record (Status: PENDING)
     payment = models.Payment(
@@ -141,7 +138,7 @@ async def upload_payment_receipt(
         payment_method=payment_method,
         payment_intent_id=f"manual_{uuid.uuid4()}",
         status=models.PaymentStatus.PENDING,
-        receipt_url=file_path,
+        receipt_url=receipt_url,
         receipt_number=f"MANUAL-{secrets.token_hex(4).upper()}"
     )
     db.add(payment)

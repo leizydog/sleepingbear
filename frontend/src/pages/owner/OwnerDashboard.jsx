@@ -187,10 +187,12 @@ const OwnerDashboard = () => {
     );
   };
 
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
   const PropertyThumbnail = ({ images, name }) => {
     let imageUrl = (images && images.length > 0) ? images[0] : null;
     if (imageUrl && !imageUrl.startsWith('http')) {
-      imageUrl = `http://localhost:8000/${imageUrl}`;
+      imageUrl = `${API_BASE_URL}/${imageUrl}`;
     }
 
     if (imageUrl) {
