@@ -375,7 +375,7 @@ const AdminDashboard = () => {
       const [statsRes, bookingsRes, propsRes, ownersRes, tenantsRes, adminsRes, paymentsRes, auditRes] = await Promise.all([
         reportsAPI.getDashboardStats(),
         bookingAPI.getAll(),
-        propertyAPI.getAll({ per_page: 100 }),
+        propertyAPI.getAll({ per_page: 100, status_filter: 'all' }),
         authAPI.getAllUsers('owner'),
         authAPI.getAllUsers('tenant'),
         authAPI.getAllUsers('admin'),
