@@ -16,6 +16,10 @@ router = APIRouter(prefix="/bookings", tags=["Bookings"])
 def resolve_image_urls(prop, base_url: str):
     if not prop: return prop
     
+    # 0. Fallback: If image_url is missing but images list has data, use the first image
+    if not prop.image_url and prop.images and len(prop.images) > 0:
+        prop.image_url = prop.images[0]
+
     # Thumbnail
     if prop.image_url and not prop.image_url.startswith("http"):
         prop.image_url = f"{base_url}/{prop.image_url}"
