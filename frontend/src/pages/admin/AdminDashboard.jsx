@@ -440,6 +440,19 @@ const AdminDashboard = () => {
     } catch (error) { console.error(error); alert("Failed to update property status."); }
   };
 
+  // ✅ NEW: Delete Property (Admin Only)
+  const handleDeleteProperty = async (id) => {
+    if (!window.confirm('Are you sure you want to DELETE this property? This action cannot be undone.')) return;
+    try {
+      await propertyAPI.delete(id);
+      alert('Property deleted successfully.');
+      refreshData();
+    } catch (error) {
+      console.error(error);
+      alert('Failed to delete property. ' + (error.response?.data?.detail || ''));
+    }
+  };
+
   // ✅ NEW: Handle Booking Approval/Rejection
   const handleBookingAction = async (id, action) => {
     if (!window.confirm(`Are you sure you want to ${action} this booking?`)) return;
@@ -627,14 +640,15 @@ const AdminDashboard = () => {
             { header: 'Status', render: (r) => <StatusPill status={r.status} />, className: 'p-3 text-center' },
             {
               header: 'Actions', render: (row) => (
-                row.status === 'pending' ? (
-                  <div className="flex gap-2 justify-center">
-                    <button onClick={() => handlePropertyAction(row.id, 'approve')} className="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600 shadow-sm transition-colors">Accept</button>
-                    <button onClick={() => handlePropertyAction(row.id, 'reject')} className="bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition-colors">Decline</button>
-                  </div>
-                ) : (
-                  <span className="text-xs text-gray-400 font-medium">Managed</span>
-                )
+                <div className="flex gap-2 justify-center">
+                  {row.status === 'pending' && (
+                    <>
+                      <button onClick={() => handlePropertyAction(row.id, 'approve')} className="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600 shadow-sm transition-colors">Accept</button>
+                      <button onClick={() => handlePropertyAction(row.id, 'reject')} className="bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition-colors">Decline</button>
+                    </>
+                  )}
+                  <button onClick={() => handleDeleteProperty(row.id)} className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 shadow-sm transition-colors">Delete</button>
+                </div>
               ), className: 'p-3 text-center'
             }
           ]} />}
