@@ -4,7 +4,7 @@ import Header from '../../components/organisms/Header';
 import DataTable from '../../components/organisms/DataTable';
 import Icon from '../../components/atoms/Icon';
 import { propertyAPI, bookingAPI, paymentsAPI } from '../../services/api';
-import { Loader2, Image as ImageIcon, Inbox, LayoutGrid, CalendarDays } from 'lucide-react';
+import { Loader2, Image as ImageIcon, Inbox, LayoutGrid, CalendarDays, FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 // --- PAYMENT REVIEW MODAL ---
@@ -148,6 +148,7 @@ const OwnerDashboard = () => {
     { id: 'in_progress', label: 'Pending Approval', icon: Inbox, count: pendingProperties.length },
     { id: 'listings', label: 'My Listings', icon: LayoutGrid, count: allProperties.length },
     { id: 'bookings', label: 'Received Bookings', icon: CalendarDays, count: bookings.length },
+    { id: 'reports', label: 'Reports', icon: FileText },
   ];
 
   // --- HELPERS ---
@@ -269,6 +270,89 @@ const OwnerDashboard = () => {
             },
           ]}
         />
+      );
+    }
+
+    // ✅ NEW: Reports Tab
+    if (activeTab === 'reports') {
+      const completedBookings = bookings.filter(b => b.status === 'confirmed' || b.status === 'completed');
+      const totalRevenue = completedBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0);
+      const avgBookingValue = completedBookings.length > 0 ? totalRevenue / completedBookings.length : 0;
+
+      const exportCSV = () => {
+        const headers = ['Property ID', 'Start Date', 'End Date', 'Amount', 'Status'];
+        const rows = bookings.map(b => [
+          b.property_id,
+          new Date(b.start_date).toLocaleDateString(),
+          new Date(b.end_date).toLocaleDateString(),
+          b.total_amount,
+          b.status
+        ]);
+
+        const csvContent = [
+          headers.join(','),
+          ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `owner_report_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      };
+
+      return (
+        <div className="p-6 space-y-6">
+          {/* Revenue Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white">
+              <p className="text-sm font-bold opacity-80 mb-1">Total Revenue</p>
+              <p className="text-3xl font-extrabold">₱{totalRevenue.toLocaleString()}</p>
+              <p className="text-xs opacity-70 mt-2">From {completedBookings.length} completed bookings</p>
+            </div>
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
+              <p className="text-sm font-bold opacity-80 mb-1">Average Booking</p>
+              <p className="text-3xl font-extrabold">₱{avgBookingValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+              <p className="text-xs opacity-70 mt-2">Per booking average</p>
+            </div>
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
+              <p className="text-sm font-bold opacity-80 mb-1">Properties Listed</p>
+              <p className="text-3xl font-extrabold">{properties.length}</p>
+              <p className="text-xs opacity-70 mt-2">{properties.filter(p => p.status === 'approved').length} approved</p>
+            </div>
+          </div>
+
+          {/* Export Section */}
+          <div className="flex items-center justify-between bg-gray-50 rounded-xl p-4">
+            <div>
+              <p className="font-bold text-gray-800">Download Report</p>
+              <p className="text-sm text-gray-500">Export all your booking data as CSV</p>
+            </div>
+            <button
+              onClick={exportCSV}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#a86add] hover:bg-[#965ac9] text-white rounded-xl font-bold text-sm shadow-sm transition-all"
+            >
+              <Icon name="Download" size={16} />
+              Export CSV
+            </button>
+          </div>
+
+          {/* Bookings Summary Table */}
+          <div>
+            <h3 className="text-lg font-bold text-gray-800 mb-4">Booking History</h3>
+            <DataTable
+              data={bookings}
+              columns={[
+                { header: 'Property', accessor: 'property_id', render: (r) => `Property #${r.property_id}` },
+                { header: 'Dates', render: (r) => `${new Date(r.start_date).toLocaleDateString()} - ${new Date(r.end_date).toLocaleDateString()}` },
+                { header: 'Amount', render: (r) => <span className="font-bold text-green-600">₱{r.total_amount?.toLocaleString()}</span> },
+                { header: 'Status', render: (r) => <StatusBadge status={r.status} /> },
+              ]}
+            />
+          </div>
+        </div>
       );
     }
   };

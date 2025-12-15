@@ -369,6 +369,10 @@ const AdminDashboard = () => {
   const [paymentsData, setPaymentsData] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ NEW: Booking Search & Sort State
+  const [bookingSearch, setBookingSearch] = useState('');
+  const [bookingSort, setBookingSort] = useState('date_desc'); // date_desc, date_asc, amount_desc, amount_asc, status
+
   const refreshData = async () => {
     try {
       setLoading(true);
@@ -678,6 +682,100 @@ const AdminDashboard = () => {
           ]} />}
 
           {activePage === 'admins' && <AdminsTableView />}
+
+          {/* ✅ NEW: Bookings Page with Search & Sort */}
+          {activePage === 'bookings' && (
+            <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm p-8 animate-fade-in relative min-h-[500px] transition-colors">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <h2 className="text-2xl font-extrabold text-gray-900 dark:text-white">All Bookings</h2>
+
+                <div className="flex items-center gap-4">
+                  {/* Search Input */}
+                  <div className="relative">
+                    <Icon name="Search" size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search by property or user..."
+                      value={bookingSearch}
+                      onChange={(e) => setBookingSearch(e.target.value)}
+                      className="pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-purple-500 w-64"
+                    />
+                  </div>
+
+                  {/* Sort Dropdown */}
+                  <select
+                    value={bookingSort}
+                    onChange={(e) => setBookingSort(e.target.value)}
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-purple-500"
+                  >
+                    <option value="date_desc">Newest First</option>
+                    <option value="date_asc">Oldest First</option>
+                    <option value="amount_desc">Highest Amount</option>
+                    <option value="amount_asc">Lowest Amount</option>
+                    <option value="status">By Status</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <DataTable
+                  data={(() => {
+                    // Filter bookings
+                    let filtered = bookings.filter(b => {
+                      const searchLower = bookingSearch.toLowerCase();
+                      return (
+                        `Property #${b.property_id}`.toLowerCase().includes(searchLower) ||
+                        `User #${b.user_id}`.toLowerCase().includes(searchLower) ||
+                        (b.status || '').toLowerCase().includes(searchLower)
+                      );
+                    });
+
+                    // Sort bookings
+                    return filtered.sort((a, b) => {
+                      switch (bookingSort) {
+                        case 'date_desc': return new Date(b.created_at) - new Date(a.created_at);
+                        case 'date_asc': return new Date(a.created_at) - new Date(b.created_at);
+                        case 'amount_desc': return (b.total_amount || 0) - (a.total_amount || 0);
+                        case 'amount_asc': return (a.total_amount || 0) - (b.total_amount || 0);
+                        case 'status': return (a.status || '').localeCompare(b.status || '');
+                        default: return 0;
+                      }
+                    });
+                  })()}
+                  columns={[
+                    { header: 'ID', accessor: 'id', className: 'p-3 font-bold dark:text-white' },
+                    { header: 'Property', render: (r) => `Property #${r.property_id}`, className: 'p-3 dark:text-gray-300' },
+                    { header: 'User', render: (r) => `User #${r.user_id}`, className: 'p-3 dark:text-gray-300' },
+                    { header: 'Amount', render: (r) => `₱${r.total_amount?.toLocaleString()}`, className: 'p-3 font-bold text-green-600 dark:text-green-400' },
+                    { header: 'Date', render: (r) => r.created_at ? new Date(r.created_at).toLocaleDateString() : 'N/A', className: 'p-3 text-xs text-gray-500' },
+                    { header: 'Status', render: (r) => <StatusPill status={r.status} />, className: 'p-3 text-center' },
+                    {
+                      header: 'Actions', render: (row) => (
+                        row.status === 'pending' ? (
+                          <div className="flex gap-2 justify-center">
+                            <button onClick={() => handleBookingAction(row.id, 'approve')} className="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600">Accept</button>
+                            <button onClick={() => handleBookingAction(row.id, 'reject')} className="bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-red-200">Decline</button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">Managed</span>
+                        )
+                      ), className: 'p-3 text-center'
+                    }
+                  ]}
+                />
+              </div>
+
+              <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+                Showing {bookings.filter(b => {
+                  const searchLower = bookingSearch.toLowerCase();
+                  return `Property #${b.property_id}`.toLowerCase().includes(searchLower) ||
+                    `User #${b.user_id}`.toLowerCase().includes(searchLower) ||
+                    (b.status || '').toLowerCase().includes(searchLower);
+                }).length} of {bookings.length} bookings
+              </div>
+            </div>
+          )}
+
           {activePage === 'retention' && <RetentionAnalytics />}
 
           {/* ✅ NEW: Audit Logs Page */}

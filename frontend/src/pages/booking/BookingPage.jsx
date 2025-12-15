@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, Loader2 } from 'lucide-react'; 
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import Header from '../../components/organisms/Header';
 import StatsCards from '../../components/organisms/StatsCards';
 import BookingCard from '../../components/molecules/BookingCard';
-import Icon from '../../components/atoms/Icon'; 
+import Icon from '../../components/atoms/Icon';
 import { useAuth } from '../../context/AuthContext';
 import { bookingAPI } from '../../services/api';
 
 // --- Modal Component (Updated for Dark Mode) ---
 const ActionModal = ({ isOpen, onClose, title, content, actions }) => {
   if (!isOpen) return null;
-  
+
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg relative border dark:border-gray-700 transition-colors duration-300">
         {/* Header */}
         <div className={`p-5 rounded-t-2xl border-b dark:border-gray-700 flex justify-between items-center 
-          ${title.includes('Cancel') 
-            ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' 
+          ${title.includes('Cancel')
+            ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
             : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-100'
           }`}>
           <h3 className="text-xl font-bold">{title}</h3>
@@ -25,12 +25,12 @@ const ActionModal = ({ isOpen, onClose, title, content, actions }) => {
             <Icon name="X" size={24} />
           </button>
         </div>
-        
+
         {/* Content */}
         <div className="p-6 max-h-[70vh] overflow-y-auto bg-gray-50 dark:bg-gray-900/50 dark:text-gray-300">
           {content}
         </div>
-        
+
         {/* Footer Actions */}
         <div className="p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-900 flex justify-end gap-3 rounded-b-2xl">
           {actions}
@@ -42,32 +42,36 @@ const ActionModal = ({ isOpen, onClose, title, content, actions }) => {
 
 const BookingPage = () => {
   const [activeFilter, setActiveFilter] = useState('all');
-  const [bookings, setBookings] = useState([]); 
+  const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalState, setModalState] = useState({ isOpen: false, type: null, data: null });
   const { user } = useAuth();
+
+  // ✅ NEW: Search and Sort State
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('date_desc'); // date_desc, date_asc, amount_desc, amount_asc
 
   // 1. Fetch Real Bookings
   useEffect(() => {
     const fetchBookings = async () => {
       try {
         const response = await bookingAPI.getMyBookings();
-        
-        const dataList = Array.isArray(response) ? response : []; 
+
+        const dataList = Array.isArray(response) ? response : [];
 
         const formatted = dataList.map(b => ({
-            id: b.id, 
-            bookingId: `BKG-${b.id}`,
-            propertyName: b.property?.name || 'Property #' + b.property_id, 
-            location: b.property?.address || '',
-            unitType: `${b.property?.bedrooms || 1}-Bedroom`,
-            price: `₱${b.total_amount.toLocaleString()}`,
-            totalAmount: `₱${b.total_amount.toLocaleString()}`,
-            checkIn: new Date(b.start_date).toLocaleDateString(),
-            checkOut: new Date(b.end_date).toLocaleDateString(),
-            status: b.status, 
-            paymentStatus: b.payments?.[0]?.status || 'pending',
-            bookingDate: new Date(b.created_at).toLocaleDateString()
+          id: b.id,
+          bookingId: `BKG-${b.id}`,
+          propertyName: b.property?.name || 'Property #' + b.property_id,
+          location: b.property?.address || '',
+          unitType: `${b.property?.bedrooms || 1}-Bedroom`,
+          price: `₱${b.total_amount.toLocaleString()}`,
+          totalAmount: `₱${b.total_amount.toLocaleString()}`,
+          checkIn: new Date(b.start_date).toLocaleDateString(),
+          checkOut: new Date(b.end_date).toLocaleDateString(),
+          status: b.status,
+          paymentStatus: b.payments?.[0]?.status || 'pending',
+          bookingDate: new Date(b.created_at).toLocaleDateString()
         }));
         setBookings(formatted);
       } catch (error) {
@@ -76,12 +80,12 @@ const BookingPage = () => {
         setLoading(false);
       }
     };
-    
+
     if (user) fetchBookings();
   }, [user]);
 
   // --- Handlers ---
-  
+
   const handleViewDetails = (id) => {
     const booking = bookings.find(b => b.id === id);
     setModalState({ isOpen: true, type: 'details', data: booking });
@@ -97,12 +101,12 @@ const BookingPage = () => {
 
   const confirmCancellation = async (id) => {
     try {
-        await bookingAPI.cancel(id); 
-        setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'cancelled' } : b));
-        alert("Booking cancelled.");
+      await bookingAPI.cancel(id);
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, status: 'cancelled' } : b));
+      alert("Booking cancelled.");
     } catch (error) {
-        console.error("Cancel failed:", error);
-        alert("Failed to cancel booking.");
+      console.error("Cancel failed:", error);
+      alert("Failed to cancel booking.");
     }
     setModalState({ isOpen: false, type: null, data: null });
   };
@@ -159,37 +163,37 @@ For questions, contact admin@sleepingbear.com
     if (!data) return null;
 
     if (type === 'details') {
-        return (
-            <div className="space-y-4 text-sm bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm dark:text-gray-300 border dark:border-gray-700">
-                <h4 className="font-extrabold text-lg mb-2 text-gray-800 dark:text-white">{data.propertyName} ({data.bookingId})</h4>
-                <p><strong>Location:</strong> {data.location}</p>
-                <p><strong>Unit Type:</strong> {data.unitType}</p>
-                <p><strong>Total Amount:</strong> {data.totalAmount}</p>
-                <p><strong>Check-in/out:</strong> {data.checkIn} — {data.checkOut}</p>
-                <p><strong>Current Status:</strong> {data.status.toUpperCase()}</p>
-            </div>
-        );
+      return (
+        <div className="space-y-4 text-sm bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm dark:text-gray-300 border dark:border-gray-700">
+          <h4 className="font-extrabold text-lg mb-2 text-gray-800 dark:text-white">{data.propertyName} ({data.bookingId})</h4>
+          <p><strong>Location:</strong> {data.location}</p>
+          <p><strong>Unit Type:</strong> {data.unitType}</p>
+          <p><strong>Total Amount:</strong> {data.totalAmount}</p>
+          <p><strong>Check-in/out:</strong> {data.checkIn} — {data.checkOut}</p>
+          <p><strong>Current Status:</strong> {data.status.toUpperCase()}</p>
+        </div>
+      );
     }
     if (type === 'confirm_cancel') {
-        return (
-            <div className="text-center p-4">
-                <AlertTriangle size={40} className="text-red-500 mx-auto mb-3" />
-                <h4 className="font-bold text-lg dark:text-white">Confirm Cancellation</h4>
-                <p className="text-red-600 dark:text-red-400 mt-2">Are you sure you want to cancel booking <strong>{data.bookingId}</strong>?</p>
-            </div>
-        );
+      return (
+        <div className="text-center p-4">
+          <AlertTriangle size={40} className="text-red-500 mx-auto mb-3" />
+          <h4 className="font-bold text-lg dark:text-white">Confirm Cancellation</h4>
+          <p className="text-red-600 dark:text-red-400 mt-2">Are you sure you want to cancel booking <strong>{data.bookingId}</strong>?</p>
+        </div>
+      );
     }
-    
+
     // --- View Receipt Online ---
     if (type === 'receipt') {
-         return (
-            <div className="flex flex-col items-center">
-                <div className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 border-dashed p-6 rounded-xl w-full shadow-sm font-mono text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-                    {getReceiptContent(data)}
-                </div>
-                <p className="text-xs text-gray-400 mt-4">This is a digital copy of your receipt.</p>
-            </div>
-        );
+      return (
+        <div className="flex flex-col items-center">
+          <div className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-600 border-dashed p-6 rounded-xl w-full shadow-sm font-mono text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+            {getReceiptContent(data)}
+          </div>
+          <p className="text-xs text-gray-400 mt-4">This is a digital copy of your receipt.</p>
+        </div>
+      );
     }
     return null;
   };
@@ -198,38 +202,60 @@ For questions, contact admin@sleepingbear.com
     const { type, data } = modalState;
 
     if (type === 'details') {
-        return (
-            <button onClick={() => setModalState({ isOpen: false })} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">Close</button>
-        );
+      return (
+        <button onClick={() => setModalState({ isOpen: false })} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">Close</button>
+      );
     }
-    
+
     if (type === 'receipt') {
-        return (
-            <>
-                <button onClick={() => setModalState({ isOpen: false })} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">Close</button>
-                <button onClick={() => downloadReceipt(data)} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
-                    <Icon name="Download" size={16} /> Download PDF
-                </button>
-            </>
-        );
+      return (
+        <>
+          <button onClick={() => setModalState({ isOpen: false })} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">Close</button>
+          <button onClick={() => downloadReceipt(data)} className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+            <Icon name="Download" size={16} /> Download PDF
+          </button>
+        </>
+      );
     }
 
     if (type === 'confirm_cancel') {
-        return (
-            <>
-                <button onClick={() => setModalState({ isOpen: false })} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600">No, Keep Booking</button>
-                <button onClick={() => confirmCancellation(data.id)} className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700">Yes, Cancel It</button>
-            </>
-        );
+      return (
+        <>
+          <button onClick={() => setModalState({ isOpen: false })} className="px-4 py-2 bg-gray-200 dark:bg-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-300 dark:hover:bg-gray-600">No, Keep Booking</button>
+          <button onClick={() => confirmCancellation(data.id)} className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700">Yes, Cancel It</button>
+        </>
+      );
     }
     return null;
   };
 
   // --- Main Render ---
   const tabs = ['all', 'confirmed', 'pending', 'completed', 'cancelled'];
-  const filteredBookings = activeFilter === 'all'
-    ? bookings
-    : bookings.filter(b => b.status.toLowerCase() === activeFilter);
+
+  // ✅ Apply search, status filter, and sort
+  const filteredBookings = bookings
+    // 1. Filter by status tab
+    .filter(b => activeFilter === 'all' || b.status.toLowerCase() === activeFilter)
+    // 2. Filter by search term
+    .filter(b => {
+      if (!searchTerm.trim()) return true;
+      const term = searchTerm.toLowerCase();
+      return (
+        b.propertyName.toLowerCase().includes(term) ||
+        b.location.toLowerCase().includes(term) ||
+        b.bookingId.toLowerCase().includes(term)
+      );
+    })
+    // 3. Sort
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'date_desc': return new Date(b.checkIn) - new Date(a.checkIn);
+        case 'date_asc': return new Date(a.checkIn) - new Date(b.checkIn);
+        case 'amount_desc': return parseFloat(b.totalAmount.replace(/[₱,]/g, '')) - parseFloat(a.totalAmount.replace(/[₱,]/g, ''));
+        case 'amount_asc': return parseFloat(a.totalAmount.replace(/[₱,]/g, '')) - parseFloat(b.totalAmount.replace(/[₱,]/g, ''));
+        default: return 0;
+      }
+    });
 
   return (
     // ADDED: dark:bg-gray-950
@@ -237,14 +263,44 @@ For questions, contact admin@sleepingbear.com
       <Header isLoggedIn={!!user} />
 
       <div className="max-w-7xl mx-auto px-6 py-10 pt-28">
-        
+
         <div className="mb-8">
           {/* ADDED: dark:text-white, dark:text-gray-400 */}
           <h1 className="text-3xl font-serif font-bold text-gray-900 dark:text-white mb-2">My Bookings</h1>
           <p className="text-gray-500 dark:text-gray-400">Track and manage all your property bookings</p>
         </div>
-        
+
         {!loading && <StatsCards bookings={bookings} />}
+
+        {/* ✅ NEW: Search and Sort Controls */}
+        <div className="flex flex-wrap items-center gap-4 mb-6">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[200px] max-w-md">
+            <Icon name="Search" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by property, location, or booking ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl text-sm bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-sm"
+            />
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-gray-600 dark:text-gray-400">Sort:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl text-sm bg-white dark:bg-gray-800 dark:text-white focus:outline-none focus:border-blue-500 font-medium shadow-sm"
+            >
+              <option value="date_desc">Newest First</option>
+              <option value="date_asc">Oldest First</option>
+              <option value="amount_desc">Highest Amount</option>
+              <option value="amount_asc">Lowest Amount</option>
+            </select>
+          </div>
+        </div>
 
         {/* Filter UI */}
         <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm mb-8 px-6 pt-2 border border-gray-100 dark:border-gray-800 transition-colors">
@@ -252,24 +308,23 @@ For questions, contact admin@sleepingbear.com
             {tabs.map(tab => {
               const count = tab === 'all' ? bookings.length : bookings.filter(b => b.status.toLowerCase() === tab).length;
               const isActive = activeFilter === tab;
-              
+
               return (
                 <button
                   key={tab}
                   onClick={() => setActiveFilter(tab)}
                   className={`py-4 text-sm font-bold capitalize border-b-[3px] transition-all whitespace-nowrap flex items-center gap-2
-                    ${isActive 
-                        ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400' 
-                        : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}
+                    ${isActive
+                      ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'}
                   `}
                 >
-                  {tab === 'all' ? 'All Bookings' : tab} 
+                  {tab === 'all' ? 'All Bookings' : tab}
                   {/* Badge: dark mode colors added */}
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                      isActive 
-                        ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300' 
-                        : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
-                  }`}>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${isActive
+                      ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300'
+                      : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                    }`}>
                     ({count})
                   </span>
                 </button>
@@ -282,13 +337,13 @@ For questions, contact admin@sleepingbear.com
         <div className="space-y-6 animate-fade-in">
           {loading ? (
             <div className="flex justify-center py-20">
-                <Loader2 className="animate-spin text-gray-400" size={40} />
+              <Loader2 className="animate-spin text-gray-400" size={40} />
             </div>
           ) : filteredBookings.length > 0 ? (
             filteredBookings.map((booking) => (
-              <BookingCard 
-                key={booking.id} 
-                booking={booking} 
+              <BookingCard
+                key={booking.id}
+                booking={booking}
                 onView={handleViewDetails}
                 onDownload={handleDownloadReceipt}
                 onCancel={handleCancelBooking}
@@ -302,11 +357,11 @@ For questions, contact admin@sleepingbear.com
           )}
         </div>
       </div>
-      
+
       {/* Action Modal */}
-      <ActionModal 
-        isOpen={modalState.isOpen} 
-        onClose={() => setModalState({ isOpen: false })} 
+      <ActionModal
+        isOpen={modalState.isOpen}
+        onClose={() => setModalState({ isOpen: false })}
         title={modalState.type === 'details' ? `Details for ${modalState.data?.bookingId}` : modalState.type === 'receipt' ? 'Booking Receipt' : 'Cancel Booking'}
         content={renderModalContent()}
         actions={renderModalActions()}

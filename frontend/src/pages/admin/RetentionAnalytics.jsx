@@ -11,6 +11,9 @@ const RetentionAnalytics = () => {
   const [selectedRiskLevel, setSelectedRiskLevel] = useState(null);
   const [riskThreshold, setRiskThreshold] = useState(70);
 
+  // ✅ NEW: Sort State
+  const [sortBy, setSortBy] = useState('risk_desc'); // risk_desc, risk_asc, name, retention
+
   useEffect(() => {
     loadData();
   }, [selectedRiskLevel, riskThreshold]);
@@ -81,7 +84,7 @@ const RetentionAnalytics = () => {
           <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white">Retention Analytics</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">AI-powered tenant retention predictions</p>
         </div>
-        <button 
+        <button
           onClick={loadData}
           className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl font-bold hover:bg-purple-700 transition-colors"
         >
@@ -92,29 +95,29 @@ const RetentionAnalytics = () => {
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          icon="Users" 
-          title="Total Tenants" 
+        <StatCard
+          icon="Users"
+          title="Total Tenants"
           value={stats?.total_tenants || 0}
           color="text-blue-600 dark:text-blue-400"
         />
-        <StatCard 
-          icon="AlertTriangle" 
-          title="At Risk" 
+        <StatCard
+          icon="AlertTriangle"
+          title="At Risk"
           value={stats?.risk_distribution?.high_risk?.count || 0}
           subtitle={`${stats?.risk_distribution?.high_risk?.percentage || 0}% of total`}
           color="text-red-600 dark:text-red-400"
         />
-        <StatCard 
-          icon="TrendingUp" 
-          title="Will Retain" 
+        <StatCard
+          icon="TrendingUp"
+          title="Will Retain"
           value={stats?.predicted_to_retain || 0}
           subtitle={`${((stats?.predicted_to_retain / stats?.total_tenants) * 100 || 0).toFixed(1)}% retention rate`}
           color="text-green-600 dark:text-green-400"
         />
-        <StatCard 
-          icon="Activity" 
-          title="Avg Risk Score" 
+        <StatCard
+          icon="Activity"
+          title="Avg Risk Score"
           value={stats?.averages?.risk_score || 0}
           subtitle="Out of 100"
           color="text-orange-600 dark:text-orange-400"
@@ -133,7 +136,7 @@ const RetentionAnalytics = () => {
               medium_risk: 'bg-yellow-500',
               low_risk: 'bg-green-500'
             };
-            
+
             return (
               <div key={risk} className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
                 <div className={`h-3 rounded-full ${colors[risk]} mb-3`} style={{ width: `${data?.percentage || 0}%` }}></div>
@@ -146,33 +149,82 @@ const RetentionAnalytics = () => {
         </div>
       </div>
 
-      {/* Filter Controls */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex gap-4 items-center">
+      {/* Filter Controls with Sort & Export */}
+      <div className="bg-white dark:bg-gray-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-800 flex flex-wrap gap-4 items-center">
         <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Filter:</span>
         {[null, 'High', 'Medium', 'Low'].map(level => (
           <button
             key={level || 'all'}
             onClick={() => setSelectedRiskLevel(level)}
-            className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
-              selectedRiskLevel === level 
-                ? 'bg-purple-600 text-white' 
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
+            className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${selectedRiskLevel === level
+              ? 'bg-purple-600 text-white'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
           >
             {level || 'All'}
           </button>
         ))}
-        
-        <div className="ml-auto flex items-center gap-2">
-          <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Risk Threshold:</label>
-          <input 
-            type="number" 
-            value={riskThreshold}
-            onChange={(e) => setRiskThreshold(parseInt(e.target.value))}
-            min="0" 
-            max="100"
-            className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-          />
+
+        <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-2"></div>
+
+        {/* Sort Dropdown */}
+        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">Sort:</span>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          className="px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-sm font-bold text-gray-700 dark:text-white focus:outline-none focus:border-purple-500"
+        >
+          <option value="risk_desc">Risk (High to Low)</option>
+          <option value="risk_asc">Risk (Low to High)</option>
+          <option value="name">Name (A-Z)</option>
+          <option value="retention">Retention Probability</option>
+        </select>
+
+        <div className="ml-auto flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-bold text-gray-700 dark:text-gray-300">Threshold:</label>
+            <input
+              type="number"
+              value={riskThreshold}
+              onChange={(e) => setRiskThreshold(parseInt(e.target.value))}
+              min="0"
+              max="100"
+              className="w-16 px-2 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+            />
+          </div>
+
+          {/* Export CSV Button */}
+          <button
+            onClick={() => {
+              // Generate CSV from allPredictions
+              const headers = ['Name', 'Email', 'Risk Score', 'Risk Level', 'Will Retain', 'Retention Probability'];
+              const rows = allPredictions.map(p => [
+                p.full_name || p.username,
+                p.email,
+                p.risk_score,
+                p.risk_level,
+                p.will_retain ? 'Yes' : 'No',
+                `${(p.retention_probability * 100).toFixed(1)}%`
+              ]);
+
+              const csvContent = [
+                headers.join(','),
+                ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+              ].join('\n');
+
+              const blob = new Blob([csvContent], { type: 'text/csv' });
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `retention_report_${new Date().toISOString().split('T')[0]}.csv`;
+              a.click();
+              window.URL.revokeObjectURL(url);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors"
+          >
+            <Icon name="Download" size={16} />
+            Export CSV
+          </button>
         </div>
       </div>
 
@@ -186,12 +238,12 @@ const RetentionAnalytics = () => {
             {atRiskTenants.length} tenants require immediate attention
           </p>
         </div>
-        
-        <DataTable 
+
+        <DataTable
           data={atRiskTenants}
           columns={[
-            { 
-              header: 'Tenant', 
+            {
+              header: 'Tenant',
               render: (r) => (
                 <div>
                   <p className="font-bold text-gray-900 dark:text-white">{r.full_name || r.username}</p>
@@ -200,8 +252,8 @@ const RetentionAnalytics = () => {
               ),
               className: 'p-4'
             },
-            { 
-              header: 'Risk Score', 
+            {
+              header: 'Risk Score',
               render: (r) => (
                 <div className="text-center">
                   <div className="inline-block">
@@ -212,13 +264,13 @@ const RetentionAnalytics = () => {
               ),
               className: 'p-4 text-center'
             },
-            { 
-              header: 'Risk Level', 
+            {
+              header: 'Risk Level',
               render: (r) => <RiskPill level={r.risk_level} />,
               className: 'p-4 text-center'
             },
-            { 
-              header: 'Churn Probability', 
+            {
+              header: 'Churn Probability',
               render: (r) => (
                 <div className="text-center">
                   <span className="font-bold text-gray-900 dark:text-white">
@@ -228,8 +280,8 @@ const RetentionAnalytics = () => {
               ),
               className: 'p-4 text-center'
             },
-            { 
-              header: 'Recommendation', 
+            {
+              header: 'Recommendation',
               accessor: 'recommendation',
               className: 'p-4 text-sm text-gray-700 dark:text-gray-300'
             },
@@ -254,12 +306,20 @@ const RetentionAnalytics = () => {
             Showing {allPredictions.length} predictions
           </p>
         </div>
-        
-        <DataTable 
-          data={allPredictions}
+
+        <DataTable
+          data={[...allPredictions].sort((a, b) => {
+            switch (sortBy) {
+              case 'risk_desc': return (b.risk_score || 0) - (a.risk_score || 0);
+              case 'risk_asc': return (a.risk_score || 0) - (b.risk_score || 0);
+              case 'name': return (a.full_name || a.username || '').localeCompare(b.full_name || b.username || '');
+              case 'retention': return (b.retention_probability || 0) - (a.retention_probability || 0);
+              default: return 0;
+            }
+          })}
           columns={[
-            { 
-              header: 'Tenant', 
+            {
+              header: 'Tenant',
               render: (r) => (
                 <div>
                   <p className="font-bold text-gray-900 dark:text-white">{r.full_name || r.username}</p>
@@ -268,34 +328,33 @@ const RetentionAnalytics = () => {
               ),
               className: 'p-4'
             },
-            { 
-              header: 'Risk Score', 
+            {
+              header: 'Risk Score',
               render: (r) => {
                 const color = r.risk_score >= 70 ? 'text-red-600' : r.risk_score >= 40 ? 'text-yellow-600' : 'text-green-600';
                 return <span className={`font-bold text-lg ${color}`}>{r.risk_score}</span>;
               },
               className: 'p-4 text-center'
             },
-            { 
-              header: 'Risk Level', 
+            {
+              header: 'Risk Level',
               render: (r) => <RiskPill level={r.risk_level} />,
               className: 'p-4 text-center'
             },
-            { 
-              header: 'Will Retain?', 
+            {
+              header: 'Will Retain?',
               render: (r) => (
-                <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                  r.will_retain 
-                    ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                }`}>
+                <span className={`px-3 py-1 rounded-full text-xs font-bold ${r.will_retain
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                  }`}>
                   {r.will_retain ? 'Yes' : 'No'}
                 </span>
               ),
               className: 'p-4 text-center'
             },
-            { 
-              header: 'Retention Probability', 
+            {
+              header: 'Retention Probability',
               render: (r) => `${(r.retention_probability * 100).toFixed(1)}%`,
               className: 'p-4 text-center font-bold text-gray-900 dark:text-white'
             }
