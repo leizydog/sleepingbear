@@ -154,14 +154,19 @@ const OwnerDashboard = () => {
   const StatusBadge = ({ status }) => {
     let styles = 'bg-gray-100 text-gray-600';
     const s = status ? status.toLowerCase() : 'unknown';
+    let label = status;
 
     if (s === 'active' || s === 'confirmed' || s === 'approved') styles = 'bg-emerald-100 text-emerald-700';
     if (s === 'pending') styles = 'bg-amber-100 text-amber-800';
     if (s === 'rejected' || s === 'cancelled') styles = 'bg-rose-100 text-rose-700';
 
+    // Use consistent terminology with Admin Dashboard
+    if (s === 'approved') label = 'Accepted';
+    if (s === 'rejected') label = 'Declined';
+
     return (
       <span className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${styles}`}>
-        {status}
+        {label}
       </span>
     );
   };
