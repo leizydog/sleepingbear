@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File, Request, Body
 from sqlalchemy.orm import Session
 from typing import Optional, List
 import shutil
@@ -74,13 +74,13 @@ def create_property(
     current_user: models.User = Depends(auth.require_role([models.UserRole.ADMIN, models.UserRole.OWNER, models.UserRole.TENANT]))
 ):
     """Create a new property"""
-    # ✅ Auto-approve properties so they appear immediately
-    initial_status = models.PropertyStatus.APPROVED
+    # ✅ FIX: Default to PENDING so Admins must approve it
+    initial_status = "pending" # Using string to be safe, or models.PropertyStatus.PENDING if available
     
     data = property_data.dict()
     
-    if 'status' in data:
-        del data['status']
+    # Force status to pending regardless of input
+    data['status'] = initial_status
 
     # Handle Images (Set first as thumbnail)
     if "images" in data and data["images"] and isinstance(data["images"], list):
@@ -89,8 +89,7 @@ def create_property(
             
     db_property = models.Property(
         **data,
-        owner_id=current_user.id,
-        status=initial_status
+        owner_id=current_user.id
     )
     db.add(db_property)
     db.commit()
@@ -131,7 +130,7 @@ def get_properties(
     
     # ✅ FIX: Default to APPROVED if no filter provided. Pass "all" to see everything.
     if status_filter is None:
-        query = query.filter(models.Property.status == models.PropertyStatus.APPROVED)
+        query = query.filter(models.Property.status == "approved") # Using string "approved" matches regex
     elif status_filter.lower() != "all":
         query = query.filter(models.Property.status == status_filter)
 
@@ -179,10 +178,14 @@ def get_property(
 def update_property_status(
     property_id: int,
     request: Request,
-    status_update: str = Query(..., regex="^(approved|rejected|pending)$"),
+    payload: dict = Body(...), # ✅ Changed to Body: Expects {"status": "approved"}
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_role([models.UserRole.ADMIN]))
 ):
+    status_update = payload.get("status")
+    if not status_update or status_update not in ["approved", "rejected", "pending"]:
+         raise HTTPException(status_code=400, detail="Invalid status")
+
     property = db.query(models.Property).filter(models.Property.id == property_id).first()
     if not property: raise HTTPException(status_code=404, detail="Property not found")
     property.status = status_update
