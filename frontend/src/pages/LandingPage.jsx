@@ -36,7 +36,7 @@ const LandingPage = () => {
 
                 const formattedProps = dataList.map(p => ({
                     id: p.id,
-                    image: p.image_url || 'https://via.placeholder.com/400',
+                    image: p.image_url || (p.images?.length > 0 ? p.images[0] : null) || 'https://via.placeholder.com/400',
                     location: p.address,
                     unitType: p.name,
                     price: `₱${p.price_per_month.toLocaleString()}/month`

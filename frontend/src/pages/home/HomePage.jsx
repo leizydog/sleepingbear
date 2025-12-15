@@ -33,7 +33,7 @@ const HomePage = () => {
         // Assuming API returns: { id, image_url, name, address, price_per_month, ... }
         const mappedProperties = properties.map(p => ({
           id: p.id,
-          image: p.image_url || 'https://via.placeholder.com/400x300?text=No+Image',
+          image: p.image_url || (p.images?.length > 0 ? p.images[0] : null) || 'https://via.placeholder.com/400x300?text=No+Image',
           location: p.address,
           unitType: p.name, // Or p.description depending on your model
           price: `₱${p.price_per_month?.toLocaleString()}/month`
