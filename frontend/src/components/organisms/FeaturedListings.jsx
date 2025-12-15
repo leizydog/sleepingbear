@@ -5,7 +5,6 @@ const FeaturedListings = ({ properties }) => {
   return (
     <div className="py-10">
       <div className="mb-8">
-        <h2 className="text-3xl font-serif font-bold text-gray-900 dark:text-white mb-2">Featured Listings</h2>
         <p className="text-gray-600 dark:text-gray-400">{properties.length} properties found matching your criteria.</p>
       </div>
 
