@@ -157,9 +157,16 @@ def get_bookings(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
+    from sqlalchemy.orm import joinedload
+    
+    query = db.query(models.Booking).options(
+        joinedload(models.Booking.property),
+        joinedload(models.Booking.payments)
+    )
+    
     if current_user.role == models.UserRole.ADMIN:
-        return db.query(models.Booking).all()
-    return db.query(models.Booking).filter(models.Booking.user_id == current_user.id).all()
+        return query.all()
+    return query.filter(models.Booking.user_id == current_user.id).all()
 
 @router.get("/my-bookings", response_model=List[schemas_booking.BookingResponse])
 def get_my_bookings(
