@@ -374,32 +374,53 @@ const AdminDashboard = () => {
   const [bookingSort, setBookingSort] = useState('date_desc'); // date_desc, date_asc, amount_desc, amount_asc, status
 
   const refreshData = async () => {
+    setLoading(true);
+
+    const mapUser = u => ({
+      id: u.id, name: u.full_name || u.username, email: u.email, contact: u.phone || 'N/A',
+      role: u.role, status: u.is_active ? 'Active' : 'Inactive'
+    });
+
+    // Fetch each API independently to prevent one failure from breaking everything
     try {
-      setLoading(true);
-      const [statsRes, bookingsRes, propsRes, ownersRes, tenantsRes, adminsRes, paymentsRes, auditRes] = await Promise.all([
-        reportsAPI.getDashboardStats(),
-        bookingAPI.getAll(),
-        propertyAPI.getAll({ per_page: 100, status_filter: 'all' }),
-        authAPI.getAllUsers('owner'),
-        authAPI.getAllUsers('tenant'),
-        authAPI.getAllUsers('admin'),
-        paymentsAPI.getAll(),
-        auditAPI.getLogs({ per_page: 50 }) // ✅ Fetch last 50 logs
-      ]);
-
+      const statsRes = await reportsAPI.getDashboardStats();
       setStats(statsRes);
-      setBookings(bookingsRes);
-      setCondoData(propsRes.properties || propsRes || []);
+    } catch (e) { console.error("❌ Failed to load stats:", e); }
 
-      const mapUser = u => ({
-        id: u.id, name: u.full_name || u.username, email: u.email, contact: u.phone || 'N/A',
-        role: u.role, status: u.is_active ? 'Active' : 'Inactive'
-      });
+    try {
+      const bookingsRes = await bookingAPI.getAll();
+      console.log("📅 Bookings loaded:", bookingsRes?.length || 0);
+      setBookings(bookingsRes || []);
+    } catch (e) { console.error("❌ Failed to load bookings:", e); }
 
+    try {
+      const propsRes = await propertyAPI.getAll({ per_page: 100, status_filter: 'all' });
+      const properties = propsRes.properties || propsRes || [];
+      console.log("🏢 Properties loaded:", properties.length);
+      setCondoData(properties);
+    } catch (e) { console.error("❌ Failed to load properties:", e); }
+
+    try {
+      const ownersRes = await authAPI.getAllUsers('owner');
+      console.log("👔 Owners loaded:", ownersRes?.length || 0);
       setOwnersData((ownersRes || []).map(mapUser));
-      setTenantsData((tenantsRes || []).map(mapUser));
-      setAdminData((adminsRes || []).map(mapUser));
+    } catch (e) { console.error("❌ Failed to load owners:", e); }
 
+    try {
+      const tenantsRes = await authAPI.getAllUsers('tenant');
+      console.log("🏠 Tenants loaded:", tenantsRes?.length || 0);
+      setTenantsData((tenantsRes || []).map(mapUser));
+    } catch (e) { console.error("❌ Failed to load tenants:", e); }
+
+    try {
+      const adminsRes = await authAPI.getAllUsers('admin');
+      console.log("👑 Admins loaded:", adminsRes?.length || 0);
+      setAdminData((adminsRes || []).map(mapUser));
+    } catch (e) { console.error("❌ Failed to load admins:", e); }
+
+    try {
+      const paymentsRes = await paymentsAPI.getAll();
+      console.log("💳 Payments loaded:", paymentsRes?.length || 0);
       setPaymentsData((paymentsRes || []).map(p => ({
         raw_id: p.id,
         id: `PAY-${p.id}`,
@@ -411,8 +432,10 @@ const AdminDashboard = () => {
         date: p.created_at ? new Date(p.created_at).toLocaleDateString() : 'N/A',
         status: p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1)) : 'Unknown'
       })));
+    } catch (e) { console.error("❌ Failed to load payments:", e); }
 
-      // ✅ Map Audit Logs
+    try {
+      const auditRes = await auditAPI.getLogs({ per_page: 50 });
       if (auditRes) {
         setAuditLogs(auditRes.map(log => ({
           id: log.id,
@@ -424,12 +447,9 @@ const AdminDashboard = () => {
           date: new Date(log.created_at).toLocaleString()
         })));
       }
+    } catch (e) { console.error("❌ Failed to load audit logs:", e); }
 
-    } catch (error) {
-      console.error("Failed to load admin data:", error);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(false);
   };
 
   useEffect(() => { refreshData(); }, []);
