@@ -43,6 +43,9 @@ const AddListingPage = () => {
     }
   });
 
+  // ✅ NEW: Payment validation error state
+  const [paymentError, setPaymentError] = useState('');
+
   // --- HANDLERS ---
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -318,25 +321,39 @@ const AddListingPage = () => {
         )}
       </div>
 
+      {/* ✅ Payment Validation Error Display */}
+      {paymentError && (
+        <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-xl text-red-600 dark:text-red-400 text-center font-bold animate-fade-in">
+          ⚠️ {paymentError}
+        </div>
+      )}
+
       <div className="mt-10 flex justify-center gap-4">
         <button onClick={() => setStep(1)} className="text-gray-500 font-bold px-8 py-3 hover:bg-gray-100 rounded-xl transition-colors">BACK</button>
         <button onClick={() => {
+          console.log('🔍 Validating payment methods:', formData.paymentMethods);
+          setPaymentError(''); // Clear previous error
+
           // Validate payment method selection
           const { bpi, gcash, cash } = formData.paymentMethods;
           if (!bpi && !gcash && !cash) {
-            alert('Please select at least one payment method.');
+            console.log('❌ No payment method selected');
+            setPaymentError('Please select at least one payment method.');
             return;
           }
           // Validate BPI credentials if selected
           if (bpi && (!formData.bankDetails.accountName || !formData.bankDetails.accountNumber)) {
-            alert('Please fill in BPI account name and number.');
+            console.log('❌ BPI selected but missing credentials');
+            setPaymentError('Please fill in BPI account name and number.');
             return;
           }
           // Validate GCash credentials if selected
           if (gcash && (!formData.gcashDetails.name || !formData.gcashDetails.number)) {
-            alert('Please fill in GCash name and number.');
+            console.log('❌ GCash selected but missing credentials');
+            setPaymentError('Please fill in GCash name and number.');
             return;
           }
+          console.log('✅ Validation passed, proceeding to step 3');
           setStep(3);
         }} className="bg-[#a86add] text-white font-bold text-xl py-3 px-16 rounded-xl shadow-lg hover:bg-[#965ac9] transition-all">Review & Submit</button>
       </div>
