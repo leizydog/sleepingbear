@@ -122,7 +122,7 @@ const AddListingPage = () => {
 
       const finalDescription = (formData.description || `${formData.condoType} unit in ${formData.address}`) + paymentInfoString;
 
-      // 3. Create Payload with Real URLs
+      // 3. Create Payload with Real URLs and Payment Methods
       const payload = {
         name: `${formData.condoName} - ${formData.unitNumber}`,
         description: finalDescription,
@@ -132,9 +132,15 @@ const AddListingPage = () => {
         bathrooms: parseInt(formData.bathrooms),
         size_sqm: parseFloat(formData.size),
         status: 'pending',
-        images: uploadedImageUrls, // ✅ Send the http://localhost:8000/... URLs
+        images: uploadedImageUrls,
         image_url: uploadedImageUrls[0] || "https://via.placeholder.com/400",
-        is_available: true
+        is_available: true,
+        // ✅ Payment Methods - Required for PaymentPage to show options
+        accepts_bpi: formData.paymentMethods.bpi,
+        accepts_gcash: formData.paymentMethods.gcash,
+        accepts_cash: formData.paymentMethods.cash,
+        bpi_number: formData.bankDetails.accountNumber || null,
+        gcash_number: formData.gcashDetails.number || null
       };
 
       // 4. Create Property
@@ -314,7 +320,25 @@ const AddListingPage = () => {
 
       <div className="mt-10 flex justify-center gap-4">
         <button onClick={() => setStep(1)} className="text-gray-500 font-bold px-8 py-3 hover:bg-gray-100 rounded-xl transition-colors">BACK</button>
-        <button onClick={() => setStep(3)} className="bg-[#a86add] text-white font-bold text-xl py-3 px-16 rounded-xl shadow-lg hover:bg-[#965ac9] transition-all">Review & Submit</button>
+        <button onClick={() => {
+          // Validate payment method selection
+          const { bpi, gcash, cash } = formData.paymentMethods;
+          if (!bpi && !gcash && !cash) {
+            alert('Please select at least one payment method.');
+            return;
+          }
+          // Validate BPI credentials if selected
+          if (bpi && (!formData.bankDetails.accountName || !formData.bankDetails.accountNumber)) {
+            alert('Please fill in BPI account name and number.');
+            return;
+          }
+          // Validate GCash credentials if selected
+          if (gcash && (!formData.gcashDetails.name || !formData.gcashDetails.number)) {
+            alert('Please fill in GCash name and number.');
+            return;
+          }
+          setStep(3);
+        }} className="bg-[#a86add] text-white font-bold text-xl py-3 px-16 rounded-xl shadow-lg hover:bg-[#965ac9] transition-all">Review & Submit</button>
       </div>
     </div>
   );
