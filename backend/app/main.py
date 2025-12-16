@@ -2,10 +2,12 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles  # Import StaticFiles
+from fastapi.responses import JSONResponse
 import os
+import traceback
 from app.db.session import engine
 from app.models import all_models as models
 from app.api.v1 import (
@@ -27,14 +29,31 @@ os.makedirs("static/uploads", exist_ok=True)
 # Mount the static directory to serve images at /static
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# CORS configuration
+# CORS configuration - Allow all origins for production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
+
+# Global exception handler to ensure CORS headers on errors
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print(f"❌ UNHANDLED ERROR: {str(exc)}")
+    traceback.print_exc()
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal server error: {str(exc)}"},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+
 
 # Include routers
 app.include_router(auth.router)
