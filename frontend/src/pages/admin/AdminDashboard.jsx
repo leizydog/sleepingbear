@@ -210,6 +210,326 @@ const AddPropertyModal = ({ onClose, onSave }) => {
         </div>
       </div>
     </div>
+  )
+};
+
+// --- EDIT PROPERTY MODAL ---
+const EditPropertyModal = ({ property, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    name: property?.name || '',
+    address: property?.address || '',
+    description: property?.description || '',
+    price_per_month: property?.price_per_month || '',
+    bedrooms: property?.bedrooms || 1,
+    bathrooms: property?.bathrooms || 1,
+    size_sqm: property?.size_sqm || 0,
+    images: property?.images || [],
+    is_available: property?.is_available ?? true
+  });
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData({
+      ...formData,
+      [name]: type === 'checkbox' ? checked : value
+    });
+  };
+
+  const handleFileChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    if (formData.images.length + files.length > 10) {
+      alert("You can only upload up to 10 images total.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const uploadData = new FormData();
+      files.forEach(file => uploadData.append('files', file));
+
+      const result = await propertyAPI.uploadImages(uploadData);
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...result.images]
+      }));
+    } catch (error) {
+      console.error("Upload failed", error);
+      alert("Failed to upload images.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveImage = (index) => {
+    const newImages = [...formData.images];
+    newImages.splice(index, 1);
+    setFormData({ ...formData, images: newImages });
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.name.trim()) { alert("Please enter a property name."); return; }
+    if (!formData.address.trim()) { alert("Please enter an address."); return; }
+
+    setSaving(true);
+    try {
+      await propertyAPI.update(property.id, {
+        ...formData,
+        price_per_month: parseFloat(formData.price_per_month),
+        bedrooms: parseInt(formData.bedrooms),
+        bathrooms: parseInt(formData.bathrooms),
+        size_sqm: parseFloat(formData.size_sqm)
+      });
+      alert("Property Updated Successfully!");
+      onSave();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update property. " + (error.response?.data?.detail || ''));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputStyle = "w-full border border-gray-300 rounded-xl py-3 px-4 outline-none focus:border-[#afa2ba] dark:bg-gray-800 dark:border-gray-700 dark:text-white transition-colors";
+  const labelStyle = "block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2";
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 font-sans">
+      <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-4xl relative z-10 overflow-hidden animate-slide-up border border-white/20 dark:border-gray-700 flex flex-col max-h-[90vh]">
+        <div className="bg-[#afa2ba] dark:bg-gray-800 px-8 py-6 flex justify-between items-center flex-shrink-0 border-b dark:border-gray-700">
+          <div>
+            <h3 className="text-2xl font-extrabold text-white tracking-wide">Edit Property</h3>
+            <p className="text-white/70 text-sm mt-1">ID: {property?.id}</p>
+          </div>
+          <button onClick={onClose} className="text-white bg-white/10 hover:bg-white/30 rounded-full p-2 transition-all"><Icon name="X" size={20} /></button>
+        </div>
+        <div className="p-8 overflow-y-auto custom-scrollbar space-y-8 flex-1">
+          {/* Basic Information */}
+          <div className="space-y-4">
+            <h4 className="font-bold text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2 flex items-center gap-2">
+              <Icon name="Building" size={18} className="text-[#afa2ba]" />
+              Basic Information
+            </h4>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="col-span-2">
+                <label className={labelStyle}>Property Name</label>
+                <input name="name" value={formData.name} onChange={handleChange} type="text" placeholder="e.g. SMDC Grass Residences Tower 4" className={inputStyle} />
+              </div>
+              <div className="col-span-2">
+                <label className={labelStyle}>Address</label>
+                <input name="address" value={formData.address} onChange={handleChange} type="text" placeholder="Full Address" className={inputStyle} />
+              </div>
+              <div className="col-span-2">
+                <label className={labelStyle}>Description</label>
+                <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Describe the property features, amenities, etc." rows={3} className={inputStyle} />
+              </div>
+              <div>
+                <label className={labelStyle}>Bedrooms</label>
+                <input name="bedrooms" value={formData.bedrooms} onChange={handleChange} type="number" min="0" className={inputStyle} />
+              </div>
+              <div>
+                <label className={labelStyle}>Bathrooms</label>
+                <input name="bathrooms" value={formData.bathrooms} onChange={handleChange} type="number" min="0" className={inputStyle} />
+              </div>
+              <div>
+                <label className={labelStyle}>Price (₱ / Month)</label>
+                <input name="price_per_month" value={formData.price_per_month} onChange={handleChange} type="number" placeholder="0.00" className={inputStyle} />
+              </div>
+              <div>
+                <label className={labelStyle}>Size (sqm)</label>
+                <input name="size_sqm" value={formData.size_sqm} onChange={handleChange} type="number" placeholder="0" className={inputStyle} />
+              </div>
+            </div>
+          </div>
+
+          {/* Availability Toggle */}
+          <div className="space-y-4">
+            <h4 className="font-bold text-gray-800 dark:text-white border-b dark:border-gray-700 pb-2 flex items-center gap-2">
+              <Icon name="ToggleLeft" size={18} className="text-[#afa2ba]" />
+              Availability
+            </h4>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                name="is_available"
+                checked={formData.is_available}
+                onChange={handleChange}
+                className="w-5 h-5 rounded border-gray-300 text-[#afa2ba] focus:ring-[#afa2ba]"
+              />
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Property is available for booking
+              </span>
+            </label>
+          </div>
+
+          {/* Property Images */}
+          <div className="space-y-4">
+            <div className="flex justify-between items-center border-b dark:border-gray-700 pb-2">
+              <h4 className="font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                <Icon name="Images" size={18} className="text-[#afa2ba]" />
+                Property Images <span className="text-sm font-normal text-gray-500 dark:text-gray-400">(Max 10)</span>
+              </h4>
+              <span className={`text-xs font-bold ${formData.images.length === 0 ? 'text-red-500' : 'text-green-500'}`}>{formData.images.length} / 10 Added</span>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer relative">
+              <input type="file" multiple accept="image/*" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+              <div className="flex flex-col items-center">
+                <Icon name="Upload" size={32} className="text-gray-400 mb-2" />
+                <p className="text-sm font-bold text-gray-600 dark:text-gray-300">{uploading ? "Uploading..." : "Click or Drag to Upload More Images"}</p>
+                <p className="text-xs text-gray-400 mt-1">JPG, PNG (Max 5MB each)</p>
+              </div>
+            </div>
+            {formData.images.length > 0 && (
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4 mt-4">
+                {formData.images.map((img, idx) => (
+                  <div key={idx} className="relative aspect-square group rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm bg-gray-100 dark:bg-gray-800">
+                    <img src={img} alt={`Upload ${idx}`} className="w-full h-full object-cover" />
+                    <button onClick={() => handleRemoveImage(idx)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"><Icon name="X" size={12} /></button>
+                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] text-center py-1 truncate px-1">{idx === 0 ? 'Main Cover' : `Image ${idx + 1}`}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="p-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-4 flex-shrink-0">
+          <button onClick={onClose} className="px-8 py-3 text-gray-500 dark:text-gray-400 font-bold hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl text-sm">Cancel</button>
+          <button disabled={uploading || saving} onClick={handleSubmit} className={`px-10 py-3 text-white font-bold rounded-xl shadow-lg text-sm flex items-center gap-2 ${(uploading || saving) ? 'bg-gray-400' : 'bg-[#afa2ba] hover:bg-[#9a8a9b] dark:bg-purple-600 dark:hover:bg-purple-700'}`}>
+            {saving ? <><Icon name="Loader2" size={16} className="animate-spin" /> Saving...</> : <><Icon name="Save" size={16} /> Save Changes</>}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- VIEW PROPERTY DETAILS MODAL ---
+const ViewPropertyModal = ({ property, onClose }) => {
+  if (!property) return null;
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved': return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+      case 'pending': return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+      case 'rejected': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400';
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 font-sans">
+      <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onClick={onClose}></div>
+      <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-3xl relative z-10 overflow-hidden animate-slide-up border border-white/20 dark:border-gray-700 flex flex-col max-h-[90vh]">
+        {/* Header with Image */}
+        <div className="relative h-64 bg-gray-200 dark:bg-gray-800 flex-shrink-0">
+          {property.images && property.images.length > 0 ? (
+            <img src={property.images[0]} alt={property.name} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Icon name="Home" size={64} className="text-gray-400" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+          <button onClick={onClose} className="absolute top-4 right-4 text-white bg-black/30 hover:bg-black/50 rounded-full p-2 transition-all backdrop-blur-sm">
+            <Icon name="X" size={20} />
+          </button>
+          <div className="absolute bottom-4 left-6 right-6">
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${getStatusColor(property.status)}`}>
+                {property.status}
+              </span>
+              {property.is_available ? (
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-500 text-white">Available</span>
+              ) : (
+                <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-500 text-white">Not Available</span>
+              )}
+            </div>
+            <h2 className="text-2xl font-extrabold text-white">{property.name}</h2>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+          {/* Location & Price */}
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-2 text-gray-600 dark:text-gray-400">
+              <Icon name="MapPin" size={18} className="mt-0.5 text-[#afa2ba]" />
+              <span className="text-sm">{property.address}</span>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-extrabold text-[#afa2ba]">₱{property.price_per_month?.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">per month</p>
+            </div>
+          </div>
+
+          {/* Features */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 text-center">
+              <Icon name="Bed" size={24} className="mx-auto mb-2 text-[#afa2ba]" />
+              <p className="text-lg font-bold text-gray-800 dark:text-white">{property.bedrooms}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Bedrooms</p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 text-center">
+              <Icon name="Bath" size={24} className="mx-auto mb-2 text-[#afa2ba]" />
+              <p className="text-lg font-bold text-gray-800 dark:text-white">{property.bathrooms}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Bathrooms</p>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 text-center">
+              <Icon name="Maximize" size={24} className="mx-auto mb-2 text-[#afa2ba]" />
+              <p className="text-lg font-bold text-gray-800 dark:text-white">{property.size_sqm}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">sqm</p>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <h4 className="font-bold text-gray-800 dark:text-white mb-2 flex items-center gap-2">
+              <Icon name="FileText" size={16} className="text-[#afa2ba]" />
+              Description
+            </h4>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
+              {property.description || 'No description provided.'}
+            </p>
+          </div>
+
+          {/* Image Gallery */}
+          {property.images && property.images.length > 1 && (
+            <div>
+              <h4 className="font-bold text-gray-800 dark:text-white mb-3 flex items-center gap-2">
+                <Icon name="Images" size={16} className="text-[#afa2ba]" />
+                All Images ({property.images.length})
+              </h4>
+              <div className="grid grid-cols-4 gap-2">
+                {property.images.map((img, idx) => (
+                  <div key={idx} className="aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 cursor-pointer hover:opacity-80 transition-opacity">
+                    <img src={img} alt={`Property ${idx + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Metadata */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 text-xs text-gray-500 dark:text-gray-400">
+            <div className="flex justify-between">
+              <span>Property ID: <strong className="text-gray-700 dark:text-gray-300">{property.id}</strong></span>
+              <span>Owner ID: <strong className="text-gray-700 dark:text-gray-300">{property.owner_id || 'N/A'}</strong></span>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex justify-end flex-shrink-0">
+          <button onClick={onClose} className="px-6 py-2 bg-[#afa2ba] hover:bg-[#9a8a9b] dark:bg-purple-600 dark:hover:bg-purple-700 text-white font-bold rounded-xl text-sm transition-colors">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -344,6 +664,124 @@ const PaymentReviewModal = ({ payment, onClose, onReview }) => {
   );
 };
 
+// ✅ NEW: Property Actions Dropdown Component
+const PropertyActionsDropdown = ({ property, onApprove, onReject, onDelete, onView, onEdit }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = React.useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const isPending = property.status === 'pending';
+  const isApproved = property.status === 'approved';
+  const isRejected = property.status === 'rejected';
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-1 text-gray-600 dark:text-gray-300"
+      >
+        <Icon name="MoreVertical" size={18} />
+      </button>
+
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-900 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden animate-slide-up">
+            {/* View Details */}
+            <button
+              onClick={() => { onView(property); setIsOpen(false); }}
+              className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors"
+            >
+              <Icon name="Eye" size={16} className="text-blue-500" />
+              View Details
+            </button>
+
+            {/* Edit Property */}
+            <button
+              onClick={() => { onEdit(property); setIsOpen(false); }}
+              className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition-colors"
+            >
+              <Icon name="Pencil" size={16} className="text-purple-500" />
+              Edit Property
+            </button>
+
+            {/* Divider */}
+            <div className="border-t border-gray-100 dark:border-gray-700" />
+
+            {/* Pending Actions */}
+            {isPending && (
+              <>
+                <button
+                  onClick={() => { onApprove(property.id); setIsOpen(false); }}
+                  className="w-full text-left px-4 py-3 text-sm font-medium text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-3 transition-colors"
+                >
+                  <Icon name="Check" size={16} />
+                  Accept Listing
+                </button>
+                <button
+                  onClick={() => { onReject(property.id); setIsOpen(false); }}
+                  className="w-full text-left px-4 py-3 text-sm font-medium text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 flex items-center gap-3 transition-colors"
+                >
+                  <Icon name="X" size={16} />
+                  Decline Listing
+                </button>
+                <div className="border-t border-gray-100 dark:border-gray-700" />
+              </>
+            )}
+
+            {/* Rejected - Show Reapprove Option */}
+            {isRejected && (
+              <>
+                <button
+                  onClick={() => { onApprove(property.id); setIsOpen(false); }}
+                  className="w-full text-left px-4 py-3 text-sm font-medium text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 flex items-center gap-3 transition-colors"
+                >
+                  <Icon name="RotateCcw" size={16} />
+                  Re-approve Listing
+                </button>
+                <div className="border-t border-gray-100 dark:border-gray-700" />
+              </>
+            )}
+
+            {/* Approved - Show Revoke Option */}
+            {isApproved && (
+              <>
+                <button
+                  onClick={() => { onReject(property.id); setIsOpen(false); }}
+                  className="w-full text-left px-4 py-3 text-sm font-medium text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 flex items-center gap-3 transition-colors"
+                >
+                  <Icon name="Ban" size={16} />
+                  Revoke Approval
+                </button>
+                <div className="border-t border-gray-100 dark:border-gray-700" />
+              </>
+            )}
+
+            {/* Delete - Always Visible */}
+            <button
+              onClick={() => { onDelete(property.id); setIsOpen(false); }}
+              className="w-full text-left px-4 py-3 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3 transition-colors"
+            >
+              <Icon name="Trash2" size={16} />
+              Delete Property
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
 const AdminDashboard = () => {
   const [activePage, setActivePage] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -372,6 +810,10 @@ const AdminDashboard = () => {
   // ✅ NEW: Booking Search & Sort State
   const [bookingSearch, setBookingSearch] = useState('');
   const [bookingSort, setBookingSort] = useState('date_desc'); // date_desc, date_asc, amount_desc, amount_asc, status
+
+  // ✅ NEW: View & Edit Property Modal State
+  const [viewProperty, setViewProperty] = useState(null);
+  const [editProperty, setEditProperty] = useState(null);
 
   const refreshData = async () => {
     setLoading(true);
@@ -582,6 +1024,12 @@ const AdminDashboard = () => {
       {/* RENDER THE PAYMENT MODAL */}
       {reviewPayment && <PaymentReviewModal payment={reviewPayment} onClose={() => setReviewPayment(null)} onReview={handlePaymentReview} />}
 
+      {/* RENDER VIEW PROPERTY MODAL */}
+      {viewProperty && <ViewPropertyModal property={viewProperty} onClose={() => setViewProperty(null)} />}
+
+      {/* RENDER EDIT PROPERTY MODAL */}
+      {editProperty && <EditPropertyModal property={editProperty} onClose={() => setEditProperty(null)} onSave={() => { setEditProperty(null); refreshData(); }} />}
+
       <Sidebar
         activePage={activePage}
         setActivePage={setActivePage}
@@ -665,21 +1113,24 @@ const AdminDashboard = () => {
 
           {activePage === 'properties' && <TableView title="All Properties" addButtonText="Add Property" onAdd={() => setShowAddPropertyModal(true)} data={condoData} columns={[
             { header: 'Name', accessor: 'name', className: 'p-3 text-sm font-bold dark:text-white' },
-            { header: 'Loc', accessor: 'address', className: 'p-3 text-sm text-gray-500 dark:text-gray-400' },
+            { header: 'Location', accessor: 'address', className: 'p-3 text-sm text-gray-500 dark:text-gray-400' },
             { header: 'Price', render: (r) => `₱${r.price_per_month?.toLocaleString()}`, className: 'p-3 text-sm font-bold text-green-600 dark:text-green-400' },
             { header: 'Status', render: (r) => <StatusPill status={r.status} />, className: 'p-3 text-center' },
             {
-              header: 'Actions', render: (row) => (
-                <div className="flex gap-2 justify-center">
-                  {row.status === 'pending' && (
-                    <>
-                      <button onClick={() => handlePropertyAction(row.id, 'approve')} className="bg-green-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-green-600 shadow-sm transition-colors">Accept</button>
-                      <button onClick={() => handlePropertyAction(row.id, 'reject')} className="bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition-colors">Decline</button>
-                    </>
-                  )}
-                  <button onClick={() => handleDeleteProperty(row.id)} className="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-red-600 shadow-sm transition-colors">Delete</button>
+              header: 'Actions',
+              render: (row) => (
+                <div className="flex justify-center">
+                  <PropertyActionsDropdown
+                    property={row}
+                    onView={(property) => setViewProperty(property)}
+                    onEdit={(property) => setEditProperty(property)}
+                    onApprove={(id) => handlePropertyAction(id, 'approve')}
+                    onReject={(id) => handlePropertyAction(id, 'reject')}
+                    onDelete={(id) => handleDeleteProperty(id)}
+                  />
                 </div>
-              ), className: 'p-3 text-center'
+              ),
+              className: 'p-3 text-center'
             }
           ]} />}
 
