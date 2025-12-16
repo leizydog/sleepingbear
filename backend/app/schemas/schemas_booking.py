@@ -5,7 +5,7 @@ from app.models.all_models import BookingStatus, PaymentStatus
 from app.schemas.schemas_property import PropertyResponse
 
 class BookingBase(BaseModel):
-    property_id: int
+    property_id: Optional[int] = None  # Made optional to handle orphaned bookings
     start_date: datetime
     end_date: datetime
     
