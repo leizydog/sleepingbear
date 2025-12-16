@@ -95,6 +95,14 @@ const AddListingPage = () => {
 
   // --- SUBMIT LOGIC (FIXED) ---
   const handleSubmit = async () => {
+    // 🛡️ Fail-safe Validation
+    const { bpi, gcash, cash } = formData.paymentMethods;
+    if (!bpi && !gcash && !cash) {
+      alert("Critical Error: No payment methods selected. Please go back and select a payment method.");
+      setStep(2);
+      return;
+    }
+
     setLoading(true);
     try {
       // 1. Upload Images First
@@ -255,7 +263,7 @@ const AddListingPage = () => {
   const renderPaymentMethods = () => (
     <div className="max-w-3xl mx-auto animate-fade-in">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Payment Configuration</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Payment Configuration (v2)</h2>
         <p className="text-gray-500 dark:text-gray-400">Select how you want to receive payments from tenants.</p>
       </div>
 
