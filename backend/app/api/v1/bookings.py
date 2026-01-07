@@ -171,12 +171,56 @@ def get_bookings(
 @router.get("/my-bookings", response_model=List[schemas_booking.BookingResponse])
 def get_my_bookings(
     request: Request,
+    search: str = None,
+    sort_by: str = "date_desc",  # Options: date_desc, date_asc, amount_desc, amount_asc, status
+    status_filter: str = None,  # Options: pending, confirmed, cancelled, completed
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.get_current_user)
 ):
-    bookings = db.query(models.Booking).filter(
+    """Get current user's bookings with optional search, filter, and sort."""
+    from sqlalchemy.orm import joinedload
+    
+    query = db.query(models.Booking).options(
+        joinedload(models.Booking.property)
+    ).filter(
         models.Booking.user_id == current_user.id
-    ).order_by(models.Booking.created_at.desc()).all()
+    )
+    
+    # Filter by status if provided
+    if status_filter:
+        status_map = {
+            "pending": models.BookingStatus.PENDING,
+            "confirmed": models.BookingStatus.CONFIRMED,
+            "cancelled": models.BookingStatus.CANCELLED,
+            "completed": models.BookingStatus.COMPLETED
+        }
+        if status_filter.lower() in status_map:
+            query = query.filter(models.Booking.status == status_map[status_filter.lower()])
+    
+    # Search by property name or ID
+    if search:
+        search_term = f"%{search}%"
+        query = query.join(models.Property).filter(
+            or_(
+                models.Property.name.ilike(search_term),
+                models.Property.address.ilike(search_term),
+                models.Booking.id.cast(db.bind.dialect.name == 'postgresql' and 'TEXT' or 'VARCHAR').ilike(search_term)
+            )
+        )
+    
+    # Apply sorting
+    if sort_by == "date_asc":
+        query = query.order_by(models.Booking.created_at.asc())
+    elif sort_by == "amount_desc":
+        query = query.order_by(models.Booking.total_amount.desc())
+    elif sort_by == "amount_asc":
+        query = query.order_by(models.Booking.total_amount.asc())
+    elif sort_by == "status":
+        query = query.order_by(models.Booking.status)
+    else:  # Default: date_desc
+        query = query.order_by(models.Booking.created_at.desc())
+    
+    bookings = query.all()
     
     # Resolve URLs
     base_url = str(request.base_url).rstrip("/")

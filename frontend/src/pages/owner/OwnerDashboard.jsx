@@ -273,20 +273,29 @@ const OwnerDashboard = () => {
       );
     }
 
-    // ✅ NEW: Reports Tab
+    // ✅ ENHANCED: Reports Tab with Filter, Sort, and Downloads
     if (activeTab === 'reports') {
       const completedBookings = bookings.filter(b => b.status === 'confirmed' || b.status === 'completed');
       const totalRevenue = completedBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0);
       const avgBookingValue = completedBookings.length > 0 ? totalRevenue / completedBookings.length : 0;
+      const pendingRevenue = bookings.filter(b => b.status === 'pending').reduce((sum, b) => sum + (b.total_amount || 0), 0);
 
-      const exportCSV = () => {
-        const headers = ['Property ID', 'Start Date', 'End Date', 'Amount', 'Status'];
+      // Sort bookings for the table
+      const sortedBookings = [...bookings].sort((a, b) => {
+        return new Date(b.created_at || b.start_date) - new Date(a.created_at || a.start_date);
+      });
+
+      const exportBookingsCSV = () => {
+        const headers = ['Booking ID', 'Property ID', 'Tenant ID', 'Start Date', 'End Date', 'Amount', 'Status', 'Created At'];
         const rows = bookings.map(b => [
+          b.id,
           b.property_id,
+          b.user_id,
           new Date(b.start_date).toLocaleDateString(),
           new Date(b.end_date).toLocaleDateString(),
           b.total_amount,
-          b.status
+          b.status,
+          b.created_at ? new Date(b.created_at).toLocaleDateString() : 'N/A'
         ]);
 
         const csvContent = [
@@ -298,7 +307,61 @@ const OwnerDashboard = () => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `owner_report_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `bookings_report_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      };
+
+      const exportPropertiesCSV = () => {
+        const headers = ['Property ID', 'Name', 'Address', 'Price/Month', 'Bedrooms', 'Bathrooms', 'Size (sqm)', 'Status'];
+        const rows = properties.map(p => [
+          p.id,
+          p.name,
+          p.address || 'N/A',
+          p.price_per_month,
+          p.bedrooms || 'N/A',
+          p.bathrooms || 'N/A',
+          p.size_sqm || 'N/A',
+          p.status
+        ]);
+
+        const csvContent = [
+          headers.join(','),
+          ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `properties_report_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      };
+
+      const exportRevenueCSV = () => {
+        const headers = ['Report Type', 'Value'];
+        const rows = [
+          ['Total Revenue', `₱${totalRevenue.toLocaleString()}`],
+          ['Pending Revenue', `₱${pendingRevenue.toLocaleString()}`],
+          ['Completed Bookings', completedBookings.length],
+          ['Total Bookings', bookings.length],
+          ['Average Booking Value', `₱${avgBookingValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}`],
+          ['Total Properties', properties.length],
+          ['Approved Properties', properties.filter(p => p.status === 'approved').length],
+          ['Report Generated', new Date().toLocaleString()]
+        ];
+
+        const csvContent = [
+          headers.join(','),
+          ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `revenue_summary_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
         window.URL.revokeObjectURL(url);
       };
@@ -306,49 +369,72 @@ const OwnerDashboard = () => {
       return (
         <div className="p-6 space-y-6">
           {/* Revenue Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white">
               <p className="text-sm font-bold opacity-80 mb-1">Total Revenue</p>
-              <p className="text-3xl font-extrabold">₱{totalRevenue.toLocaleString()}</p>
-              <p className="text-xs opacity-70 mt-2">From {completedBookings.length} completed bookings</p>
+              <p className="text-2xl font-extrabold">₱{totalRevenue.toLocaleString()}</p>
+              <p className="text-xs opacity-70 mt-2">{completedBookings.length} completed</p>
             </div>
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
-              <p className="text-sm font-bold opacity-80 mb-1">Average Booking</p>
-              <p className="text-3xl font-extrabold">₱{avgBookingValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-              <p className="text-xs opacity-70 mt-2">Per booking average</p>
+            <div className="bg-gradient-to-br from-amber-500 to-amber-600 rounded-2xl p-5 text-white">
+              <p className="text-sm font-bold opacity-80 mb-1">Pending Revenue</p>
+              <p className="text-2xl font-extrabold">₱{pendingRevenue.toLocaleString()}</p>
+              <p className="text-xs opacity-70 mt-2">Awaiting confirmation</p>
             </div>
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
-              <p className="text-sm font-bold opacity-80 mb-1">Properties Listed</p>
-              <p className="text-3xl font-extrabold">{properties.length}</p>
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white">
+              <p className="text-sm font-bold opacity-80 mb-1">Avg Booking</p>
+              <p className="text-2xl font-extrabold">₱{avgBookingValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+              <p className="text-xs opacity-70 mt-2">Per booking</p>
+            </div>
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 text-white">
+              <p className="text-sm font-bold opacity-80 mb-1">Properties</p>
+              <p className="text-2xl font-extrabold">{properties.length}</p>
               <p className="text-xs opacity-70 mt-2">{properties.filter(p => p.status === 'approved').length} approved</p>
             </div>
           </div>
 
-          {/* Export Section */}
-          <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-800 rounded-xl p-4">
-            <div>
-              <p className="font-bold text-gray-800 dark:text-gray-200">Download Report</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Export all your booking data as CSV</p>
+          {/* Export Options */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-5">
+            <h3 className="font-bold text-gray-800 dark:text-gray-200 mb-4">Download Reports</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <button
+                onClick={exportBookingsCSV}
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+              >
+                <Icon name="Download" size={16} className="text-blue-500" />
+                <span className="font-medium text-gray-700 dark:text-gray-200">Bookings Report</span>
+              </button>
+              <button
+                onClick={exportPropertiesCSV}
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+              >
+                <Icon name="Download" size={16} className="text-purple-500" />
+                <span className="font-medium text-gray-700 dark:text-gray-200">Properties Report</span>
+              </button>
+              <button
+                onClick={exportRevenueCSV}
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+              >
+                <Icon name="Download" size={16} className="text-emerald-500" />
+                <span className="font-medium text-gray-700 dark:text-gray-200">Revenue Summary</span>
+              </button>
             </div>
-            <button
-              onClick={exportCSV}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#a86add] hover:bg-[#965ac9] text-white rounded-xl font-bold text-sm shadow-sm transition-all"
-            >
-              <Icon name="Download" size={16} />
-              Export CSV
-            </button>
           </div>
 
-          {/* Bookings Summary Table */}
+          {/* Bookings Table */}
           <div>
-            <h3 className="text-lg font-bold text-gray-800 mb-4">Booking History</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200">Booking History</h3>
+              <span className="text-sm text-gray-500 dark:text-gray-400">{bookings.length} total bookings</span>
+            </div>
             <DataTable
-              data={bookings}
+              data={sortedBookings}
               columns={[
-                { header: 'Property', accessor: 'property_id', render: (r) => `Property #${r.property_id}` },
-                { header: 'Dates', render: (r) => `${new Date(r.start_date).toLocaleDateString()} - ${new Date(r.end_date).toLocaleDateString()}` },
-                { header: 'Amount', render: (r) => <span className="font-bold text-green-600">₱{r.total_amount?.toLocaleString()}</span> },
-                { header: 'Status', render: (r) => <StatusBadge status={r.status} /> },
+                { header: 'ID', accessor: 'id', className: 'p-3 font-bold' },
+                { header: 'Property', render: (r) => `Property #${r.property_id}`, className: 'p-3' },
+                { header: 'Tenant', render: (r) => `User #${r.user_id}`, className: 'p-3' },
+                { header: 'Dates', render: (r) => <span className="text-xs">{new Date(r.start_date).toLocaleDateString()} - {new Date(r.end_date).toLocaleDateString()}</span>, className: 'p-3' },
+                { header: 'Amount', render: (r) => <span className="font-bold text-green-600 dark:text-green-400">₱{r.total_amount?.toLocaleString()}</span>, className: 'p-3' },
+                { header: 'Status', render: (r) => <StatusBadge status={r.status} />, className: 'p-3 text-center' },
               ]}
             />
           </div>
