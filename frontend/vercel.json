@@ -16,6 +16,7 @@
         }
     ],
     "env": {
-        "REACT_APP_API_URL": "https://sleepingbear-mvhl.onrender.com"
+        "REACT_APP_API_URL": "https://sleepingbear-mvhl.onrender.com",
+        "CI": "false"
     }
 }
