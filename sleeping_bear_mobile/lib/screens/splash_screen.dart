@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 import 'dart:async';
-import 'auth/login_screen.dart'; // 1. IMPORTANT: I-import ang LoginScreen mo
+import 'auth/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -18,7 +17,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   late Animation<double> _breathingAnimation;
 
   double _bearScale = 0.0;
-  double _opacity = 0.0;
   bool _showText = false;
 
   @override
@@ -49,7 +47,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       if (mounted) {
         setState(() {
           _bearScale = 1.0; 
-          _opacity = 1.0;
         });
         _breathingController.repeat(reverse: true);
       }

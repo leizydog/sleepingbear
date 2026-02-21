@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import '../models/user.dart';
 import '../services/api_service.dart';
 
@@ -73,41 +75,28 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  // ✅ FIXED: Update Profile Method
+  // ✅ Update Profile — calls real /auth/me PUT endpoint
   Future<bool> updateProfile({required String name, required String phone}) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // TODO: Uncomment this line when your Backend API is ready
-      // final updatedData = await _apiService.updateProfile(name: name, phone: phone);
-      
-      // FOR NOW: Simulate network delay
-      await Future.delayed(const Duration(seconds: 1));
+      final headers = await _apiService.getHeaders();
+      final response = await http.put(
+        Uri.parse('${ApiService.baseUrl}/auth/me'),
+        headers: headers,
+        body: jsonEncode({'full_name': name, 'phone': phone}),
+      );
 
-      // Update the local User object so the UI refreshes
-      if (_user != null) {
-        _user = User(
-          id: _user!.id,
-          email: _user!.email,
-          username: _user!.username,
-          role: _user!.role,
-          // Removed 'token' here because your User model doesn't have it
-          createdAt: _user!.createdAt,
-          
-          // Updated fields:
-          fullName: name, 
-          phone: phone,
-          
-          // ✅ FIXED: Added required 'isActive' field
-          // We keep the existing value, or default to true if it's somehow null
-          isActive: _user!.isActive, 
-        );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        _user = User.fromJson(data);
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        throw Exception(jsonDecode(response.body)['detail'] ?? 'Failed to update profile');
       }
-
-      _isLoading = false;
-      notifyListeners();
-      return true;
     } catch (e) {
       _error = e.toString().replaceAll('Exception: ', '');
       _isLoading = false;

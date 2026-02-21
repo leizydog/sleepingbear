@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../payments/payment_screen.dart';
 import '../../providers/booking_provider.dart';
 import '../../models/booking.dart';
 // We don't need the local Booking class anymore, we use the real one

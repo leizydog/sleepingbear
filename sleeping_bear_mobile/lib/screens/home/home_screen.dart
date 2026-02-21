@@ -122,8 +122,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         radius: 35, 
                         backgroundColor: Colors.white,
                         child: Text(
-                          (user?.username != null && user!.username.isNotEmpty) 
-                              ? user.username[0].toUpperCase() 
+                          (user?.username != null && user!.username!.isNotEmpty) 
+                              ? user.username![0].toUpperCase() 
                               : '?',
                           style: TextStyle(
                             color: _primaryDark, 
@@ -392,7 +392,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 // ✅ STATIC AVATAR (Not clickable)
                 Positioned(
                   bottom: -60,
-                  child: _buildAvatar(user.username, isDarkMode),
+                  child: _buildAvatar(user.username ?? '', isDarkMode),
                 ),
               ],
             ),
@@ -401,7 +401,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             // --- USER IDENTITY ---
             Text(
-              user.fullName ?? user.username,
+              user.fullName ?? user.username ?? 'User',
               style: TextStyle(
                 fontSize: 26, 
                 fontWeight: FontWeight.w900, 
@@ -603,7 +603,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // --- EDIT DIALOG ---
   void _showEditProfileDialog(BuildContext context, AuthProvider authProvider) {
     final user = authProvider.user!;
-    final nameController = TextEditingController(text: user.fullName ?? user.username);
+    final nameController = TextEditingController(text: user.fullName ?? user.username ?? '');
     final phoneController = TextEditingController(text: user.phone ?? '');
     
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;

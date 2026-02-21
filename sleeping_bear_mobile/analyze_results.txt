@@ -1,0 +1,63 @@
+﻿Analyzing sleeping_bear_mobile...                               
+
+   info - Don't invoke 'print' in production code - lib\providers\booking_provider.dart:39:7 - avoid_print
+   info - Don't invoke 'print' in production code - lib\providers\property_provider.dart:109:7 - avoid_print
+   info - Empty catch block - lib\screens\bookings\booking_create_screen.dart:81:17 - empty_catches
+warning - Unused import: '../payments/payment_screen.dart' - lib\screens\bookings\booking_list_screen.dart:4:8 - unused_import
+   info - Don't use 'BuildContext's across async gaps - lib\screens\bookings\booking_list_screen.dart:24:36 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\bookings\booking_list_screen.dart:252:61 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\bookings\booking_list_screen.dart:285:41 - deprecated_member_use
+   info - 'activeColor' is deprecated and shouldn't be used. Use activeThumbColor instead. This feature was deprecated after v3.31.0-2.0.pre - lib\screens\home\home_screen.dart:228:25 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\home\home_screen.dart:259:38 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\home\home_screen.dart:444:51 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\home\home_screen.dart:643:37 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\home\home_screen.dart:644:44 - use_build_context_synchronously
+   info - Don't invoke 'print' in production code - lib\screens\owner\add_listing_screen.dart:814:9 - avoid_print
+   info - Don't use 'BuildContext's across async gaps - lib\screens\owner\add_listing_screen.dart:839:57 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\owner\owner_dashboard_screen.dart:29:37 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\screens\owner\owner_dashboard_screen.dart:30:36 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\owner\owner_dashboard_screen.dart:112:37 - deprecated_member_use
+   info - Don't use 'BuildContext's across async gaps - lib\screens\owner\owner_dashboard_screen.dart:125:61 - use_build_context_synchronously
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\owner\owner_dashboard_screen.dart:221:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\owner\owner_dashboard_screen.dart:324:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\owner\owner_dashboard_screen.dart:328:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\owner\owner_dashboard_screen.dart:343:64 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\screens\payments\payment_screen.dart:54:58 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\payments\payment_screen.dart:55:65 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\payments\payment_screen.dart:56:79 - curly_braces_in_flow_control_structures
+   info - 'foregroundColor' is deprecated and shouldn't be used. use colors in eyeStyle and dataModuleStyle instead - lib\screens\payments\payment_screen.dart:343:7 - deprecated_member_use
+   info - Statements in an if should be enclosed in a block - lib\screens\properties\property_list_screen.dart:55:43 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\properties\property_list_screen.dart:56:48 - curly_braces_in_flow_control_structures
+   info - Parameter 'key' could be a super parameter - lib\screens\retention\retention_dashboard_screen.dart:7:9 - use_super_parameters
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\retention\retention_dashboard_screen.dart:191:22 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\retention\retention_dashboard_screen.dart:193:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\retention\retention_dashboard_screen.dart:248:37 - deprecated_member_use
+   info - Unnecessary use of 'toList' in a spread - lib\screens\retention\retention_dashboard_screen.dart:361:71 - unnecessary_to_list_in_spreads
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\retention\retention_dashboard_screen.dart:384:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\retention\retention_dashboard_screen.dart:419:38 - deprecated_member_use
+warning - Unused import: 'dart:math' - lib\screens\splash_screen.dart:2:8 - unused_import
+warning - The value of the field '_opacity' isn't used - lib\screens\splash_screen.dart:21:10 - unused_field
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\splash_screen.dart:138:56 - deprecated_member_use
+warning - Unused import: 'dart:io' - lib\services\api_service.dart:2:8 - unused_import
+warning - Unused import: 'package:http_parser/http_parser.dart' - lib\services\api_service.dart:4:8 - unused_import
+
+flutter : 40 issues 
+found. (ran in 3.4s)
+At line:1 char:1
++ flutter analyze 
+2>&1 | Out-File 
+-FilePath c:\Users\Us
+er\sleepingbearf ...
++ 
+~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo   
+           : NotSpe  
+  cified: (40 issu   
+ es found. (ran i    
+n 3.4s):String)     
+[], RemoteExcept    
+ion
+    + FullyQualified 
+   ErrorId : Native  
+  CommandError
+ 

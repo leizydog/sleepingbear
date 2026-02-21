@@ -1,7 +1,5 @@
 import 'dart:convert';
-import 'dart:io'; 
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart'; 
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sleeping_bear_mobile/models/booking.dart';
@@ -174,7 +172,8 @@ class ApiService {
       await saveToken(data['access_token']);
       return data;
     } else {
-      throw Exception('Login failed');
+      final error = jsonDecode(response.body);
+      throw Exception(error['detail'] ?? 'Login failed. Check your email and password.');
     }
   }
   
