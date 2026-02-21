@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: sleepingbear
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://sleepingbeardb_s13g_user:lrOIIhkCz9EMoRqHZeXFLMF8lcsdkSRm@dpg-d6c4cgkr85hc73dsogdg-a.singapore-postgres.render.com/sleepingbeardb_s13g
+      - key: SECRET_KEY
+        value: sleepingbear-super-secret-jwt-key-2024-render
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
+      - key: CLOUDINARY_CLOUD_NAME
+        value: your_cloud_name
+      - key: CLOUDINARY_API_KEY
+        value: your_api_key
+      - key: CLOUDINARY_API_SECRET
+        value: your_api_secret
+      - key: PYTHON_VERSION
+        value: 3.11.0

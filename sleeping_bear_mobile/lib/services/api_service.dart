@@ -10,7 +10,7 @@ import 'package:sleeping_bear_mobile/models/payment_method.dart';
 class ApiService {
   // --- CONNECTION SETTINGS ---
   // Ensure this matches your setup (e.g. 192.168.x.x for physical device)
-  static const String baseUrl = 'https://sleepingbear.onrender.com'; 
+  static const String baseUrl = 'https://sleepingbear-mvhl.onrender.com'; 
 
   // ---------------------------
 
