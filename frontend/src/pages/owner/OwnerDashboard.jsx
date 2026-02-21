@@ -71,7 +71,7 @@ const PaymentReviewModal = ({ payment, onClose, onReview }) => {
 
 const OwnerDashboard = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  useAuth(); // auth context used for access control
   const [activeTab, setActiveTab] = useState('in_progress');
   const [properties, setProperties] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -172,6 +172,7 @@ const OwnerDashboard = () => {
     );
   };
 
+  // eslint-disable-next-line no-unused-vars
   const PaymentBadge = ({ method }) => {
     if (!method) return <span className="text-gray-400 text-xs italic">N/A</span>;
     let styles = 'bg-gray-100 text-gray-600 border border-gray-200';

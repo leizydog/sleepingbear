@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { User, Lock, Check, AlertTriangle, Loader2, UploadCloud, QrCode, Copy } from 'lucide-react';
+import { User, Check, AlertTriangle, Loader2, UploadCloud, QrCode, Copy } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Header from '../../components/organisms/Header';
 import Input from '../../components/atoms/Input';

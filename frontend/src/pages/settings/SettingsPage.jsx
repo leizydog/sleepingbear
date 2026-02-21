@@ -5,7 +5,7 @@ import { authAPI } from '../../services/api';
 import Header from '../../components/organisms/Header';
 
 const SettingsPage = () => {
-  const { user, login } = useAuth(); // We use login to update local state if needed
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
