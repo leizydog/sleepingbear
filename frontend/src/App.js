@@ -3,18 +3,18 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 
 // --- Contexts ---
 import { AuthProvider } from './context/AuthContext';
-import { DarkModeProvider } from './context/ThemeContext'; 
+import { DarkModeProvider } from './context/ThemeContext';
 import PublicLayout from './components/templates/PublicLayout';
 
 // --- Pages ---
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
-import BookingPage from './pages/booking/BookingPage'; 
-import PaymentPage from './pages/booking/PaymentPage'; 
+import BookingPage from './pages/booking/BookingPage';
+import PaymentPage from './pages/booking/PaymentPage';
 import ConfirmationPage from './pages/booking/ConfirmationPage';
 import AdminDashboard from './pages/admin/AdminDashboard';
-import OwnerDashboard from './pages/owner/OwnerDashboard'; 
+import OwnerDashboard from './pages/owner/OwnerDashboard';
 import AddListingPage from './pages/owner/AddListingPage';
 import SettingsPage from './pages/settings/SettingsPage';
 
@@ -24,17 +24,7 @@ import PropertyDetailsPage from './pages/property/PropertyDetailsPage';
 // --- CSS ---
 import './index.css';
 
-// --- Placeholder Component (Keep for other routes if needed) ---
-const Placeholder = ({ title }) => (
-  <div className="flex items-center justify-center h-screen bg-gray-100 dark:bg-gray-800 transition-colors">
-    <div className="text-center">
-      <h1 className="text-4xl font-bold text-gray-300 mb-4">🚧</h1>
-      <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-200">{title}</h2>
-      <p className="text-gray-500">Under Construction</p>
-      <a href="/" className="text-blue-600 hover:underline mt-4 block">Go Home</a>
-    </div>
-  </div>
-);
+
 
 function App() {
   return (
@@ -45,11 +35,11 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/search" element={<Navigate to="/" replace />} />
-            
+
             {/* Auth Routes */}
             <Route path="/login" element={<PublicLayout><LoginPage /></PublicLayout>} />
             <Route path="/register" element={<PublicLayout><RegisterPage /></PublicLayout>} />
-            
+
             {/* Private User Flow */}
             <Route path="/bookings" element={<BookingPage />} />
             <Route path="/payment" element={<PaymentPage />} />

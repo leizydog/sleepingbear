@@ -1,14 +1,7 @@
 {
     "version": 2,
-    "builds": [
-        {
-            "src": "package.json",
-            "use": "@vercel/static-build",
-            "config": {
-                "distDir": "build"
-            }
-        }
-    ],
+    "buildCommand": "CI=false npm run build",
+    "outputDirectory": "build",
     "rewrites": [
         {
             "source": "/(.*)",
@@ -16,7 +9,6 @@
         }
     ],
     "env": {
-        "REACT_APP_API_URL": "https://sleepingbear-mvhl.onrender.com",
-        "CI": "false"
+        "REACT_APP_API_URL": "https://sleepingbear-mvhl.onrender.com"
     }
 }

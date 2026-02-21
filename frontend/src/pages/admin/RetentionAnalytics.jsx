@@ -16,6 +16,7 @@ const RetentionAnalytics = () => {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRiskLevel, riskThreshold]);
 
   const loadData = async () => {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+
 import { authAPI } from '../../services/api'; // Use API directly to avoid auto-login context
 
 const RegisterPage = () => {
