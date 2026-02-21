@@ -1,11 +1,12 @@
 import 'property.dart';
-import '../../models/booking.dart';
 
 enum BookingStatus {
   pending,
   confirmed,
   cancelled,
   completed,
+  rejected,
+  declined,
 }
 
 class Booking {
@@ -55,6 +56,10 @@ class Booking {
         return BookingStatus.cancelled;
       case 'completed':
         return BookingStatus.completed;
+      case 'rejected':
+        return BookingStatus.rejected;
+      case 'declined':
+        return BookingStatus.declined;
       default:
         return BookingStatus.pending;
     }
@@ -74,6 +79,10 @@ class Booking {
         return 'Cancelled';
       case BookingStatus.completed:
         return 'Completed';
+      case BookingStatus.rejected:
+        return 'Rejected';
+      case BookingStatus.declined:
+        return 'Declined';
     }
   }
 }
